@@ -1,0 +1,89 @@
+This software is designed to analyze the data from the TTree that is output from the CAEN DT5702. 
+sPHENIX Hadronic calorimeter tiles respond to cosmic hits, and the data is readout via SiPM's to the unit.
+
+The file contains, as of now, 6 functions, that are used jointly to analyze the data:
+
+TH1F *makeUniTree(string f, int mode = 0, int iscalib = 0)
+Primary function that reads root file and analyzes ttree
+
+f - input root file
+
+mode - paramater signifies how the performance ratio is calculated:
+0 - do not calculate, simply draw histograms
+1 - I skipped one for some reason
+2 - Performance = MPV_Tile/MPV_Ref -> Used for when there's one reference tile
+3 - Performance = MPV_Tile/<MPV_Test> -> Used for when there is no reference tile (early Uniplast data)
+4 - Performance = MPV_Tile/<MPV_Refs> -> For newest GSU tests involving two reference tiles
+
+iscalib - creates files necessary to calculate position/correct based calibration factors
+0 - do not create calibration files (use if you just want to draw or the factors have already been made)
+1 - do create calibration files (use if doing a first pass of new data with no calibration info)
+
+float extractPerfRat(char* filelist, int mode)
+This function extracts the tile best suited to being a new reference tile
+
+filelist - list of files associated with the tests of a particular angle
+
+mode - see above under makeUniTree
+
+void makeRunningDists(char *filelist, int mode1, int mode2, char* outname, int save = 0)
+Runs makeUniTree over a list of files specified by filelist
+
+filelist - list of files to be analyzed
+
+mode1 - Should be set to 1; function used to have more runmodes, but they are now deprecated, will be pruned
+        in future push
+
+mode2 - Should be whatever mode you want to run makeUniTree in
+
+outname - output file name
+
+save - 1 = save, 0 = do not save
+
+float extractSBR(TH1F *histin)
+
+Currently untested. Meant to integrate pedestal and Landau distribution to extract signal to background ratio. 
+
+int countLines(char *filelist)
+
+Simply counts the number of lines in a given file. Used to set limits on for loops.
+
+filelist - list of files to be analyzed
+
+void superImpose(int mode = 2, char* globalname = "", char* bd = "")
+
+Looks for files created by makeRunningDists, then creates 1 histogram of the global performance distribution, and 4 
+that contain only 1 tile angle. 
+
+numSec - number of HCal eta angles being analyzed. Set to 4 now because we hae B21-B24 tiles
+
+mode - Draw mode, automatically set to 2 because mode 1 isn't as useful. Will probably deprecate
+
+globalname - name of file containing global distribution of tile performances
+
+bd - prefix on files containing histogram for individual tile angle.
+
+void makePositDep(char *filelist, int setup)
+Makes plot of performance ratio versus SiPM position and averages each position to calculate correction factor
+
+filelist - list of files associated with one tile angle
+
+setup - setup of CAEN unit
+
+fileNum - number of files associated with test, used to determine array size, so has to be set as const
+
+void makeCalFiles(char *filelist, int mode)
+Makes calibration files to be fed to makePostDep
+
+filelist - list of files to be analyzed
+
+mode - analysis mode to be fed to makeUniTree
+
+float getCorrFactor(int chan, int setup, int angle)
+Returns correction factor determined via the per-channel, per-angle calibration process
+
+chan - channel number
+
+setup - Physical test setup
+
+angle - tile angle 
