@@ -30,23 +30,24 @@ using namespace std;
   ----------------------------*/
 
 const int nChans = 10; //10 for Uniplast data, 9 for first shipment preliminary testing
-const int Trig1 = 10;//10; //0 for uniplast data
-const int Trig2 = 11;//11; //1 for uniplast data
-const int thresh = 250;//250 for GSU, 475 for Uniplast
-const int setup = 5;
+const int Trig1 = 0;//10; //0 for uniplast data
+const int Trig2 = 1;//11; //1 for uniplast data
+const int thresh = 475;//250 for GSU, 475 for Uniplast
+const int setup = 3;
 const int strl = 72;
-const int nBins = 100;
+const int nBins = 40;
 TH1F* makeUniTree(string f, int mode, int iscalib);
 void makeRunningDists(char *filelist, int mode);
 float extractPerfRat(char* filelist, int mode);
 float extractSBR(TH1F *histin);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int setup, int angle);
+void superImpose(int start, char* globalname = "", char* bd = "");
 //Mode 1 makes a distribution stack MPV's from the file list provided
 //Mode 2 makes a graph that plots the average stack MPV versus the test
 //number to track the performance over time. 
 
-TH1F* makeUniTree(string f, int mode = 0, int iscalib = 0)
+TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 {
   TFile *fin = new TFile(f.c_str());
   TTree *mppc = (TTree*)fin->Get("mppc");
@@ -55,19 +56,16 @@ TH1F* makeUniTree(string f, int mode = 0, int iscalib = 0)
   mppc -> SetBranchAddress("chg",&chg);
   TH1F *hcalNoTrig[nChans];
   TH1F *hcalSoftTrig[nChans];
-  string angle = f.substr(strl,2);
+  int angleco = angle - 20; 
  
-  stringstream convert(angle);
-  int angleco = 0; convert >> angleco;
- 
-  angleco -= 20;
+  
  
   
     
 
   int nEvents = mppc -> GetEntries();
 
-  //int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
+  int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7}; // GSU Channel List
 
@@ -77,8 +75,8 @@ TH1F* makeUniTree(string f, int mode = 0, int iscalib = 0)
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7,8}; //GSU test stand for first batch of pre-production tiles
 
-  int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
-  
+  //int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
+  cout << "Test" << endl;
   TCanvas *c1 = new TCanvas();
   c1 -> Divide(4,3);
   TF1 *Fits[nChans];
@@ -141,7 +139,7 @@ TH1F* makeUniTree(string f, int mode = 0, int iscalib = 0)
       }
       
       
-     
+      if(mode == 0)hcalSoftTrig[i] -> Draw();
      
      
     
@@ -157,6 +155,7 @@ TH1F* makeUniTree(string f, int mode = 0, int iscalib = 0)
   if(setup  == 3)
     {
       start = 0;
+      end = nChans;
     }
   for(int i = start; i < end ;i++)
     {
@@ -181,10 +180,10 @@ TH1F* makeUniTree(string f, int mode = 0, int iscalib = 0)
       
     }
   
+  
   if(iscalib)
     {
-      TFile *output = new TFile(Form("calibFiles/%sCal.root",f.substr(f.length()-12,5).c_str()),"RECREATE");
-      //TFile *output = new TFile(Form("B21_%dcal.root",rand()%100),"RECREATE");
+      TFile *output = new TFile(Form("calibFiles/B%dCal_%d.root",angle,rand()%100),"RECREATE");
       positionDep -> SetMarkerStyle(4);
       positionDep -> SetName("positionDep");
       output -> cd();
@@ -200,29 +199,6 @@ TH1F* makeUniTree(string f, int mode = 0, int iscalib = 0)
  
   if(mode == 2 || mode == 3 || mode == 4) return refScale;
   
-  //if(mode == 2) return mpvAve;
-  //cout << "Average: " << mpvAve << endl;
-  //cout << "Upper Bound: " << mpvAve*1.1 << endl;
-  //cout << "Lower Bount: " << mpvAve*0.9 << endl;
-  /*for(int i = 0; i < nChans; i++)
-    {
-      if(Fits[i] -> GetParameter(1) > mpvAve * 1.1 || Fits[i] -> GetParameter(1) < mpvAve*0.9)
-	   {
-	      hcalSoftTrig[i]->GetXaxis()->SetTitle("FAILED: Bad performance");
-	    hcalSoftTrig[i]->GetXaxis()->CenterTitle();
-	    hcalSoftTrig[i]->GetXaxis()->SetTitleSize(0.10);
-	    hcalSoftTrig[i]->GetXaxis()->SetTitleOffset(-1.50);
-	    hcalSoftTrig[i]->GetYaxis()->SetTitle("Failed");
-	    hcalSoftTrig[i]->GetYaxis()->SetTitleSize(0.06);
-	    hcalSoftTrig[i]->SetLabelColor(2,"X");
-	    hcalSoftTrig[i]->SetLabelColor(2,"Y");
-	    hcalSoftTrig[i]->SetAxisColor(2,"X");
-	    hcalSoftTrig[i]->SetAxisColor(2,"Y");
-	   }
-	   }*/
-
-
-
   return 0;
 }
 
@@ -393,53 +369,32 @@ float extractPerfRat(char* filelist, int mode)
 
 
 
-void makeRunningDists(char *filelist, int mode1, int mode2, char* outname, int save = 0)
+void makeRunningDists(char *filelist, int mode, char* outname, int angle, int iscalib=0)
 {
   
   ifstream list;
   int numOfFiles = countLines(filelist);
   cout << numOfFiles << endl;
   list.open(filelist);
+  cout << "Test" << endl;
   TH1F *runningDist;
   TFile *output = new TFile(Form("%s.root",outname), "RECREATE");
-  if(mode1 == 1){
-    if(mode2 == 1)
-      {
-	runningDist = new TH1F("runningDist","runningDist",200,400,1400);
-      }
-    else
-      {
-	runningDist = new TH1F("runningDist","runningDist",nBins,0,2);
-      }
-    for(int i = 0; i < numOfFiles; i++)
-      {
-	string name;
-	list >> name;
-	//cout << name << endl;
-	runningDist -> Add(makeUniTree(name,mode2,0));
+  runningDist = new TH1F("runningDist","runningDist",nBins,0,2);
+  
+  for(int i = 0; i < numOfFiles; i++)
+    {
+      string name;
+      list >> name;
+      cout << name << endl;
+      runningDist -> Add(makeUniTree(name,mode,iscalib,angle));
     }
-    runningDist -> Draw();
-    //runningDist -> Fit("gaus","","");
-    runningDist -> SetName(outname);
-  }
+  runningDist -> Draw();
+  runningDist -> SetName(outname);
+  
   output -> cd();
-  if(save == 1)runningDist -> Write();
+  runningDist -> Write();//Use save = 0 if you need to debug
   output -> Close();
-  /* 
-  if(mode1 == 2){
-    float mpv[numOfFiles];
-    float x[numOfFiles];
-    for(int i = 0; i < numOfFiles; i++)
-      {
-	string name;
-	list >> name;
-	x[i] = i+1;
-	mpv[i] = extractAve(name);
-      }
-    TGraph *Track = new TGraph((int)sizeof(mpv)/(sizeof(mpv[0])),x, mpv);
-    Track -> SetMarkerStyle(4);
-  }
-  */
+ 
 
  
   
@@ -471,56 +426,55 @@ int countLines(char *filelist) {
 }
 
 const int numSec = 4;
-void superImpose(int mode = 2, char* globalname = "", char* bd = "")
+void superImpose(int start, char* globalname = "", char* bd = "")
 {
-  gStyle -> SetOptStat(1101);
+  gStyle -> SetOptStat(1111);
   TH1F *hists[numSec];
   TFile *secs[numSec];
-  TFile *global = new TFile(Form("%s.root",globalname));
-  TH1F *allSecs = (TH1F*)global->Get(globalname);
-  allSecs -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Refs}>");
-  TCanvas *globalc = new TCanvas();
-  allSecs -> SetTitle("");
-  allSecs -> SetName("All Tiles");
-  allSecs -> Draw();
+  
+  if(globalname){
+    TFile *global = new TFile(Form("%s.root",globalname));
+    TH1F *allSecs = (TH1F*)global->Get(globalname);
+    allSecs -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Refs}>");
+    TCanvas *globalc = new TCanvas();
+    allSecs -> SetTitle("");
+    allSecs -> SetName("All Tiles");
+    allSecs -> Draw();
+  }
+  int colors[4] = {1,2,3,6};
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
   //leg -> AddEntry(allSecs,"All Tiles","l");
   TCanvas *breakdown = new TCanvas();
-  for(int i = 0; i < numSec; i++)
+  for(int i = start-1; i < numSec+start-1; i++)
     {
-      secs[i] = new TFile(Form("B%d%s.root",i+21,bd));
-      hists[i] = (TH1F*)secs[i] -> Get(Form("B%d%s",i+21,bd));
+      secs[i-start+1] = new TFile(Form("B%d%s.root",i+21,bd));
+      cout << Form("B%d%s",i+21,bd) << endl;
+      hists[i-start+1] = (TH1F*)secs[i-start+1] -> Get(Form("B%d%s",i+21,bd));
       //hists[i] -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Test}>");
-      hists[i] -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Refs}>");
-      hists[i] -> SetName(Form("B%d",i+21));
-      hists[i] -> SetLineColor(i+1);
-      if(i == 3)hists[i] -> SetLineColor(i+3);
-      hists[i] -> SetMarkerStyle(4);
-      hists[i] -> SetTitle("");
-      if(mode == 0){
-      if(i == 0)hists[i] -> Draw();
-      if(i!=0)hists[i]->Draw("same");
-      }
-      leg -> AddEntry(hists[i],Form("B%d",i+21),"l");
+      hists[i-start+1] -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Test}>");
+      hists[i-start+1] -> SetName(Form("B%d",i+21));
+      hists[i-start+1] -> SetLineColor(colors[i-start+1]);
+      hists[i-start+1] -> SetMarkerStyle(4);
+      hists[i-start+1] -> SetTitle("");
+      leg -> AddEntry(hists[i-start+1],Form("B%d",i+21),"l");
     }
   leg -> Draw("same");
-  if(mode == 2){
-    TCanvas *c1 = new TCanvas();
-    c1 -> Divide(2,2);
-    for(int i = 0; i < numSec; i++)
-      {
-	c1 -> cd(i+1);
-	hists[i] -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Refs}>");
-	hists[i] -> GetXaxis() -> SetRangeUser(0,2);
+ 
+  TCanvas *c1 = new TCanvas();
+  c1 -> Divide(2,2);
+  for(int i = 0; i < numSec; i++)
+    {
+      c1 -> cd(i+1);
+      hists[i] -> GetXaxis() -> SetRangeUser(0,2);
 	
-	hists[i] ->Draw();
+      hists[i] ->Draw();
 	
-      }
-  }
+    }
+  
 }
 
-const int fileNum = 22;
-void makePositDep(char *filelist, int setup)
+const int fileNum = 7;
+void makePositDep(char *filelist, int setup, int angle)
 {
   
   TMultiGraph *allChans = new TMultiGraph();
@@ -535,36 +489,40 @@ void makePositDep(char *filelist, int setup)
     {
       string name;
       tilelist >> name;
-      //cout << name << endl;
       ins[i] = new TFile(name.c_str());
       TGraph *dummy = (TGraph*)ins[i] -> Get("positionDep");
       TGraph *dummy2 = new TGraph();
       dummy2 -> SetMarkerStyle(4);
-      string code = name.substr(0,3);
-      //cout << code << endl;
-      string angle = code.substr(1,2);
-      stringstream convert(angle);
-      int angleco =0; convert >> angleco;
-      angleco -= 20;
-      cout << angleco << endl;
-      for(int j = 0; j < nChans; j++)
+      dummy2 -> GetYaxis() -> SetRangeUser(0,2);
+      int start;
+      int end;
+      if(setup == 3){
+	start = 0;
+	end = nChans;
+      }
+      if(setup == 5){
+	start = 1;
+	end = nChans -1;
+      }
+      
+      for(int j = start; j < end; j++)
 	{
-	  if(j != 0 && j!=9){
+	  // if(j != 0 && j!=9){
 	    double x,y;
 	    dummy -> GetPoint(j,x,y);
 	  
-	    dummy2 -> SetPoint(j-1,x,y*getCorrFactor(j,setup,angleco));
+	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,setup,angle-21));
 	    /*
 	      else{
 	      dummy -> SetPoint(j+1,x,y*getCorrFactor(j,setup));
 	      }
 	    */
-	    corrFac[j] += y*getCorrFactor(j,setup,angleco);
-	    }
+	    corrFac[j] += y*getCorrFactor(j,setup,angle-21);
+	    // }
 	    
 	}
       
-      
+      /*
       //check to see what color to make the markers
       if(!strcmp(code.c_str(),"B21"))
 	{
@@ -588,7 +546,7 @@ void makePositDep(char *filelist, int setup)
       //to legend)
       if(added[0] == 0 && !strcmp(code.c_str(),"B21"))
 	{
-	  leg -> AddEntry(dummy2,"B21","p");
+	 
 	  added[0] += 1;
 	}
       if(added[1] == 0 && !strcmp(code.c_str(),"B22"))
@@ -606,9 +564,13 @@ void makePositDep(char *filelist, int setup)
 	    leg -> AddEntry(dummy2,"B24","p");
 	    added[3] += 1;
 	  }
+      */
+      if(i == 0)  leg -> AddEntry(dummy2,Form("B%d",angle),"p");
+
       allChans -> Add(dummy2,"p");
       
     }
+ 
   
   for(int i = 0; i < nChans; i++)
     {
@@ -620,12 +582,14 @@ void makePositDep(char *filelist, int setup)
   
   allChans -> Draw("ap");
   allChans -> GetXaxis() -> SetTitle("SiPM Position Number");
-  allChans -> GetYaxis() -> SetTitle("MPV_{Tile}/<MPV_{Refs}>");
+  allChans -> GetYaxis() -> SetTitle("MPV_{Tile}/<MPV_{Test}>");
+  allChans -> GetYaxis() -> SetRangeUser(0,2);
   leg -> Draw("same");
 
  
 }
-  
+
+/*
 void makeCalFiles(char *filelist, int mode)
 {
   ifstream tilelist;
@@ -640,7 +604,7 @@ void makeCalFiles(char *filelist, int mode)
       makeUniTree(name,mode,1);
     }
 }
-
+*/
 float getCorrFactor(int chan, int setup, int angle)
 {
   
@@ -651,9 +615,21 @@ float getCorrFactor(int chan, int setup, int angle)
 
   float NTSAvefactor[10] = {0.983826, 0.972284, 0.976437, 0.942392, 0.997507, 0.934308, 0.999448, 1.11689, 1.11689};
 
-  float uniFactor[10] = {1.06388, 1.03855, 1.09293, 0.910196, 1.05224, 1.04943, 0.906457, 1.03199, 0.92796, 0.92796};
+  float uniFactor[10][12] = {{0.989601, 0.957811, 0.844825, 0.894116, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {1.09243, 0.982417, 1.09423, 1.08497, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {1.0379, 0.987022, 1.09045, 1.03904, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {1.05944, 1.0591, 1.1273, 1.14251, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {0.903958, 0.899917, 0.911996, 0.930151, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {1.0384, 1.08864, 1.08739, 0.983534, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {1.00953, 1.05771, 1.05937, 1.0865, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {0.944529, 0.916359, 0.863106, 0.891162, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {0.9991, 1.0597, 1.03, 1.04918, 1, 1, 1, 1, 1, 1, 1, 1},
+			     {0.9251, 0.991318, 0.891331, 0.898837, 1, 1, 1, 1, 1, 1, 1, 1},};//Uniplast test factor 
 
-  float NTSUniFactor[10] = {0.959184,0.868481,0.908916,0.86014,0.833106,0.859274,0.869979,0.838039,0.9355,0.9355};
+  float NTSUniFactor[10] = {0.959184,0.868481,0.908916,0.86014,0.833106,0.859274,0.869979,0.838039,0.9355,0.9355};//For redoing Uniplast tests with new test stand at GSU
+
+
+  
   /*
   float dualFactor[8][12] = {{0.941543,0.84383,0.801166,1.07996,1,1,1,1,1,1,1,1},
 			     {0.945356,0.889836,0.78879,1.07194,1,1,1,1,1,1,1,1},
@@ -676,9 +652,9 @@ float getCorrFactor(int chan, int setup, int angle)
   if(setup==0) return 1/OTSfactor[chan];
   if(setup==1) return 1/NTSfactor[chan];
   if(setup==2) return 1/NTSAvefactor[chan];
-  if(setup==3) return 1/uniFactor[chan];
+  if(setup==3) return 1/uniFactor[chan][angle-1];
   if(setup==4) return 1/NTSUniFactor[chan];
-  if(setup==5) return 1;//1/dualFactor[chan-1][angle-1];
+  if(setup==5) return 1/dualFactor[chan-1][angle-1];
   //if(setup == 5) return 1; 
 
   return 0;
