@@ -30,10 +30,15 @@ using namespace std;
   ----------------------------*/
 
 const int nChans = 10; //10 for Uniplast data, 9 for first shipment preliminary testing
-const int Trig1 = 0;//10; //0 for uniplast data
-const int Trig2 = 1;//11; //1 for uniplast data
-const int thresh = 475;//250 for GSU, 475 for Uniplast
-const int setup = 3;
+const int Trig1 = 10;//10; //0 for uniplast data
+const int Trig2 = 11;//11; //1 for uniplast data
+const int thresh = 250;//250 for GSU, 475 for Uniplast
+const int setup = 5;
+/*----------------
+Correction factor setup list: 
+Setup 3 for uniplast data
+Serup 5 for dual reference tile setup
+------------*/
 const int strl = 72;
 const int nBins = 40;
 TH1F* makeUniTree(string f, int mode, int iscalib);
@@ -65,7 +70,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 
   int nEvents = mppc -> GetEntries();
 
-  int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
+  //int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7}; // GSU Channel List
 
@@ -75,8 +80,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7,8}; //GSU test stand for first batch of pre-production tiles
 
-  //int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
-  cout << "Test" << endl;
+  int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
   TCanvas *c1 = new TCanvas();
   c1 -> Divide(4,3);
   TF1 *Fits[nChans];
@@ -166,7 +170,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
       if(mode == 3) performance = (Fits[i] -> GetParameter(1)/mpvAve)*getCorrFactor(i,setup,angleco);
       if(mode == 4) performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,setup,angleco);
       
-	
+      cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << endl;
      
       refScale -> Fill(performance);
       positionDep -> SetPoint(i,i,performance);
