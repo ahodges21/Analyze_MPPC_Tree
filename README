@@ -10,7 +10,7 @@ f - input root file
 
 mode - parameter signifies how the performance ratio is calculated:
 0 - do not calculate, simply draw histograms
-1 - I skipped one for some reason
+1 - Forgot to make this do something
 2 - Performance = MPV_Tile/MPV_Ref -> Used for when there's one reference tile
 3 - Performance = MPV_Tile/<MPV_Test> -> Used for when there is no reference tile (early Uniplast data)
 4 - Performance = MPV_Tile/<MPV_Refs> -> For newest GSU tests involving two reference tiles
