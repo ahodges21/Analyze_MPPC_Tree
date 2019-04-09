@@ -169,7 +169,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
       if(mode == 3) performance = (Fits[i] -> GetParameter(1)/mpvAve)*getCorrFactor(i,setup,angleco);
       if(mode == 4) performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,setup,angleco);
       
-      if(mode == 1) cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << endl;
+      cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << endl;
      
       refScale -> Fill(performance);
       positionDep -> SetPoint(i,i,performance);
