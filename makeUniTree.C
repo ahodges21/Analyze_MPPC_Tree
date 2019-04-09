@@ -32,7 +32,7 @@ using namespace std;
 const int nChans = 10; //10 for Uniplast data, 9 for first shipment preliminary testing
 const int Trig1 = 10;//10; //0 for uniplast data
 const int Trig2 = 11;//11; //1 for uniplast data
-const int thresh = 250;//250 for GSU, 475 for Uniplast
+const int thresh = 250;//475;//250 for GSU, 475 for Uniplast
 const int setup = 5;
 /*----------------
 Correction factor setup list: 
@@ -62,7 +62,6 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
   TH1F *hcalNoTrig[nChans];
   TH1F *hcalSoftTrig[nChans];
   int angleco = angle - 20; 
- 
   
  
   
@@ -170,7 +169,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
       if(mode == 3) performance = (Fits[i] -> GetParameter(1)/mpvAve)*getCorrFactor(i,setup,angleco);
       if(mode == 4) performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,setup,angleco);
       
-      cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << endl;
+      if(mode == 1) cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << endl;
      
       refScale -> Fill(performance);
       positionDep -> SetPoint(i,i,performance);
@@ -477,7 +476,7 @@ void superImpose(int start, char* globalname = "", char* bd = "")
   
 }
 
-const int fileNum = 7;
+const int fileNum = 21;
 void makePositDep(char *filelist, int setup, int angle)
 {
   
@@ -515,13 +514,13 @@ void makePositDep(char *filelist, int setup, int angle)
 	    double x,y;
 	    dummy -> GetPoint(j,x,y);
 	  
-	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,setup,angle-21));
+	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,setup,angle-20));
 	    /*
 	      else{
 	      dummy -> SetPoint(j+1,x,y*getCorrFactor(j,setup));
 	      }
 	    */
-	    corrFac[j] += y*getCorrFactor(j,setup,angle-21);
+	    corrFac[j] += y*getCorrFactor(j,setup,angle-20);
 	    // }
 	    
 	}
@@ -619,16 +618,16 @@ float getCorrFactor(int chan, int setup, int angle)
 
   float NTSAvefactor[10] = {0.983826, 0.972284, 0.976437, 0.942392, 0.997507, 0.934308, 0.999448, 1.11689, 1.11689};
 
-  float uniFactor[10][12] = {{0.989601, 0.957811, 0.844825, 0.894116, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {1.09243, 0.982417, 1.09423, 1.08497, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {1.0379, 0.987022, 1.09045, 1.03904, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {1.05944, 1.0591, 1.1273, 1.14251, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {0.903958, 0.899917, 0.911996, 0.930151, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {1.0384, 1.08864, 1.08739, 0.983534, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {1.00953, 1.05771, 1.05937, 1.0865, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {0.944529, 0.916359, 0.863106, 0.891162, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {0.9991, 1.0597, 1.03, 1.04918, 1, 1, 1, 1, 1, 1, 1, 1},
-			     {0.9251, 0.991318, 0.891331, 0.898837, 1, 1, 1, 1, 1, 1, 1, 1},};//Uniplast test factor 
+  float uniFactor[10][12] = {{0.989601, 0.957811, 0.844825, 0.894116, 0.987334, 0.911911, 1.09497, 0.92585, 0.883242, 1.07314, 1.02452, 0.87297},
+			     {1.09243, 0.982417, 1.09423, 1.08497, 1.00973, 0.84541, 0.912819, 0.870002, 0.882522, 0.798823, 1.07152, 0.922318},
+			     {1.0379, 0.987022, 1.09045, 1.03904, 1.00018, 1.01716, 0.962158, 1.07442, 1.0613, 1.05614, 0.96668, 1.06403},
+			     {1.05944, 1.0591, 1.1273, 1.14251, 0.933805, 1.0133, 0.938138, 1.10554, 1.06226, 1.11945, 1.05903, 1.05031},
+			     {0.903958, 0.899917, 0.911996, 0.930151, 0.906021, 0.904496, 0.816524, 0.932161, 0.890464, 0.925368, 0.862732, 0.928946},
+			     {1.0384, 1.08864, 1.08739, 0.983534, 1.05889, 1.04756, 1.10376, 1.05079, 1.05043, 1.04497, 1.02763, 1.07738},
+			     {1.00953, 1.05771, 1.05937, 1.0865, 1.04967, 1.0836, 1.05704, 1.05847, 1.14003, 0.940622, 1.00165, 0.856642},
+			     {0.944529, 0.916359, 0.863106, 0.891162, 0.944426, 0.928753, 0.972719, 0.950543, 0.950041, 0.955648, 0.970133, 0.989863},
+			     {0.9991, 1.0597, 1.03, 1.04918, 0.996916, 1.04336, 1.07335, 1.01073, 0.949444, 1.09776, 1.02661, 1.08458},
+			     {0.9251, 0.991318, 0.891331, 0.898837, 1.11301, 1.20446, 1.06852, 1.02149, 1.13027, 0.988081, 0.989497, 1.15295},};//Uniplast test factor 
 
   float NTSUniFactor[10] = {0.959184,0.868481,0.908916,0.86014,0.833106,0.859274,0.869979,0.838039,0.9355,0.9355};//For redoing Uniplast tests with new test stand at GSU
 
