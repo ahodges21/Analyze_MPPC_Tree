@@ -205,7 +205,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
   return 0;
 }
 
-float extractPerfRat(char* filelist, int mode)
+float extractPerfRat(char* filelist, int mode, float factor)
 {
   
  
@@ -336,7 +336,7 @@ float extractPerfRat(char* filelist, int mode)
       
 	  if(mode == 2)
 	    {
-	      performance = (Fits[k] -> GetParameter(1)/Fits[0]->GetParameter(1))*getCorrFactor(k,5,angleco);
+	      performance = (1/factor)*(Fits[k] -> GetParameter(1)/Fits[0]->GetParameter(1))*getCorrFactor(k,5,angleco);
 	    }
 	  else if(mode == 3)
 	    {
@@ -476,7 +476,7 @@ void superImpose(int start, char* globalname = "", char* bd = "")
   
 }
 
-const int fileNum = 21;
+const int fileNum = 5;
 void makePositDep(char *filelist, int setup, int angle)
 {
   
@@ -492,6 +492,7 @@ void makePositDep(char *filelist, int setup, int angle)
     {
       string name;
       tilelist >> name;
+      cout << name << endl;
       ins[i] = new TFile(name.c_str());
       TGraph *dummy = (TGraph*)ins[i] -> Get("positionDep");
       TGraph *dummy2 = new TGraph();
@@ -643,14 +644,14 @@ float getCorrFactor(int chan, int setup, int angle)
 			     {0.887272,0.87827,0.770897,0.939147,1,1,1,1,1,1,1,1},
 			     {0.912858,0.796032,0.911402,1.09011,1,1,1,1,1,1,1,1}};
   */
-  float dualFactor[8][12] = {{0.810873,0.814866,0.794136,0.763176,1,1,1,1,1,1,1,1},
-			     {0.847336,0.854614,0.806812,0.769812,1,1,1,1,1,1,1,1},
-			     {0.838685,0.821466,0.778553,0.70985,1,1,1,1,1,1,1,1},
-			     {0.88497,0.841338,0.788198,0.775766,1,1,1,1,1,1,1,1},
-			     {0.838685,0.872622,0.797924,0.831189,1,1,1,1,1,1,1,1},
-			     {0.865029,0.887264,0.816234,0.833545,1,1,1,1,1,1,1,1},
-			     {0.848827,0.860359,0.791134,0.811859,1,1,1,1,1,1,1,1},
-			     {0.831169,0.923422,0.877023,0.817548,1,1,1,1,1,1,1,1}};
+  float dualFactor[8][12] = {{0.810873,0.814866,0.794136,0.763176,0.935977,1,1,1,1,1,1,1},
+			     {0.847336,0.854614,0.806812,0.769812,0.934153,1,1,1,1,1,1,1},
+			     {0.838685,0.821466,0.778553,0.70985,0.893511,1,1,1,1,1,1,1},
+			     {0.88497,0.841338,0.788198,0.775766,0.947077,1,1,1,1,1,1,1},
+			     {0.838685,0.872622,0.797924,0.831189,0.939296,1,1,1,1,1,1,1},
+			     {0.865029,0.887264,0.816234,0.833545,0.97727,1,1,1,1,1,1,1},
+			     {0.848827,0.860359,0.791134,0.811859,0.902238,1,1,1,1,1,1,1},
+			     {0.831169,0.923422,0.877023,0.817548,0.99918,1,1,1,1,1,1,1}};
   
   if(setup==0) return 1/OTSfactor[chan];
   if(setup==1) return 1/NTSfactor[chan];
