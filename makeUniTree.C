@@ -31,7 +31,7 @@ using namespace std;
 
 const int nChans = 10; //10 for Uniplast data, 9 for first shipment preliminary testing
 const int Trig1 = 10;//10; //0 for uniplast data
-const int Trig2 = 11;//11; //1 for uniplast data
+const int Trig2 = 31;//11; //1 for uniplast data
 const int thresh = 250;//475;//250 for GSU, 475 for Uniplast
 const int setup = 5;
 /*----------------
@@ -80,6 +80,9 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
   //int chanList[nChans] = {0,1,2,3,4,5,6,7,8}; //GSU test stand for first batch of pre-production tiles
 
   int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
+
+  //int chanList[nChans] = {31,30,29,28,23,22,21,20,10};
+  
   TCanvas *c1 = new TCanvas();
   c1 -> Divide(4,3);
   TF1 *Fits[nChans];
@@ -106,6 +109,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 	  mppc -> GetEntry(j);
 	  hcalNoTrig[i] -> Fill(chg[chanList[i]]);
 	  
+
 	  //John H's method
 	  
 	  int chanCheck = 0;
@@ -215,7 +219,8 @@ float extractPerfRat(char* filelist, int mode, float factor)
   int minPerfChan = 0;
   string minPerfFile = ""; 
   fstream link; link.open(filelist);
-  
+  float best_perf = 0;
+
   for(int l = 0; l < numOfFiles; l++)
     {
       
@@ -247,7 +252,9 @@ float extractPerfRat(char* filelist, int mode, float factor)
       //int chanList[nChans] = {0,1,2,3,4,5,6,7,8}; //GSU test stand for first batch of pre-production tiles
 
       int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
-  
+
+      //int chanList[nChans] = {31,30,29,28,23,22,21,20,10};
+      
       TCanvas *c1 = new TCanvas();
       c1 -> Divide(4,3);
       TF1 *Fits[nChans];
@@ -333,6 +340,7 @@ float extractPerfRat(char* filelist, int mode, float factor)
 	{
       
 	  float performance = 0;
+	   
       
 	  if(mode == 2)
 	    {
@@ -347,7 +355,7 @@ float extractPerfRat(char* filelist, int mode, float factor)
 	      minPerfChan = k;
 	      minPerfFile = f;
 	      minPerf = abs(1 - performance);
-      
+	      best_perf = performance;
 	    }
 	  else
 	    {
@@ -365,7 +373,7 @@ float extractPerfRat(char* filelist, int mode, float factor)
     }
   cout << "File: " << minPerfFile <<endl;
   cout << "Channel: " << minPerfChan << endl;
-  cout << "Ratio: " << minPerf << endl;
+  cout << "Ratio: " << best_perf << endl;
   return 0;
 }
   
@@ -476,7 +484,7 @@ void superImpose(int start, char* globalname = "", char* bd = "")
   
 }
 
-const int fileNum = 5;
+const int fileNum = 42;
 void makePositDep(char *filelist, int setup, int angle)
 {
   
@@ -644,14 +652,14 @@ float getCorrFactor(int chan, int setup, int angle)
 			     {0.887272,0.87827,0.770897,0.939147,1,1,1,1,1,1,1,1},
 			     {0.912858,0.796032,0.911402,1.09011,1,1,1,1,1,1,1,1}};
   */
-  float dualFactor[8][12] = {{0.810873,0.814866,0.794136,0.763176,0.935977,1,1,1,1,1,1,1},
-			     {0.847336,0.854614,0.806812,0.769812,0.934153,1,1,1,1,1,1,1},
-			     {0.838685,0.821466,0.778553,0.70985,0.893511,1,1,1,1,1,1,1},
-			     {0.88497,0.841338,0.788198,0.775766,0.947077,1,1,1,1,1,1,1},
-			     {0.838685,0.872622,0.797924,0.831189,0.939296,1,1,1,1,1,1,1},
-			     {0.865029,0.887264,0.816234,0.833545,0.97727,1,1,1,1,1,1,1},
-			     {0.848827,0.860359,0.791134,0.811859,0.902238,1,1,1,1,1,1,1},
-			     {0.831169,0.923422,0.877023,0.817548,0.99918,1,1,1,1,1,1,1}};
+  float dualFactor[8][12] = {{0.810873,0.814866,0.794136,0.763176,0.935977,1,1,0.962745,1,1,1,1},
+			     {0.847336,0.854614,0.806812,0.769812,0.934153,1,1,0.972421,1,1,1,1},
+			     {0.838685,0.821466,0.778553,0.70985,0.893511,1,1,0.968322,1,1,1,1},
+			     {0.88497,0.841338,0.788198,0.775766,0.947077,1,1,0.993708,1,1,1,1},
+			     {0.838685,0.872622,0.797924,0.831189,0.939296,1,1,0.963874,1,1,1,1},
+			     {0.865029,0.887264,0.816234,0.833545,0.97727,1,1,0.985357,1,1,1,1},
+			     {0.848827,0.860359,0.791134,0.811859,0.902238,1,1,0.93354,1,1,1,1},
+			     {0.831169,0.923422,0.877023,0.817548,0.99918,1,1,0.979267,1,1,1,1}};
   
   if(setup==0) return 1/OTSfactor[chan];
   if(setup==1) return 1/NTSfactor[chan];
