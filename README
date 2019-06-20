@@ -84,3 +84,30 @@ chan - channel number
 setup - Physical test setup
 
 angle - tile angle 
+
+buildGlobalDist.C
+
+This macro reads in a bunch of .txt files that contain a breakdown of the tile tester data by tile angle. 
+In order to get it setup, in the same directory as the macro, you need to create the following paths:
+
+excelLists
+excelLists/plots
+
+In the excelLists/ directory create a file for each tile angle with the following form: "B##excel.txt". 
+So ## goes from 21 to 32. 
+
+Then all you need to do is copy and paste the GSU PR values from the database into each of the .txt files. 
+Be sure to do this carefully, of course. 
+
+Then:
+
+> root -l
+> .L buildGlobalDist.C
+> buildGlobalDist()
+> .q
+
+You might as well just quit root because for some reason, saving to an output file whipes everything from any open 
+convasses. Anyways, you'll get the following from the macro:
+
+1) Plots of the PR values for each tile angle and the global distribution will be placed in excelLists/plots
+2) A root file containing all the histograms will also be created with the name Master_Output_yyyymmdd.root
