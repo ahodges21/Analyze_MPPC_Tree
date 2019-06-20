@@ -76,9 +76,9 @@ void ShipmentComp(int angle, const int nShips, int offset)
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
   for(int i = 0 + offset; i < nShips+offset; i++)
     {
-      shipsIn[i].open(Form("/Users/anthonyhodges/sPHENIX/uniplastData/excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));
+      shipsIn[i].open(Form("/excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));
       hShips[i] = new TH1F(Form("Shipment_%d",i),Form("Shipment_%d",i),40,0,2);
-      for(int j = 0; j < countLines(Form("/Users/anthonyhodges/sPHENIX/uniplastData/excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));j++)
+      for(int j = 0; j < countLines(Form("excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));j++)
 	{
 	  float x;
 	  shipsIn[i] >> x;
