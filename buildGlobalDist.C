@@ -67,39 +67,41 @@ void buildGlobalDist()
 			    
 }
 
-void ShipmentComp(int angle, const int nShips, int offset)
+void ShipmentComp(int angle, const int nShips)
 {
+  
   gStyle -> SetOptStat(0);
   int color = 0;
   ifstream shipsIn[nShips];
   TH1F *hShips[nShips];
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
-  for(int i = 0 + offset; i < nShips+offset; i++)
+  for(int i = 0; i < nShips; i++)
     {
-      shipsIn[i].open(Form("/excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));
+      shipsIn[i].open(Form("excelLists/shipBreakdown/B%d/B%d_%d.txt",angle,angle,i+1));
       hShips[i] = new TH1F(Form("Shipment_%d",i),Form("Shipment_%d",i),40,0,2);
-      for(int j = 0; j < countLines(Form("excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));j++)
+      for(int j = 0; j < countLines(Form("excelLists/shipBreakdown/B%d/B%d_%d.txt",angle,angle,i+1));j++)
 	{
 	  float x;
 	  shipsIn[i] >> x;
+	  //cout << x << endl;
 	  hShips[i] -> Fill(x);
 	}
       
-      hShips[i] -> SetTitle(";MPV_{Tile}/<MPV_{Refs}>;");
+      hShips[i] -> SetTitle(Form("B%d;MPV_{Tile}/<MPV_{Refs}>;",angle));
       hShips[i] -> SetLineColor(colors[color]);
-      leg -> AddEntry(hShips[i],Form("Shipment %d",i+1),"l");
-      if(i == 0)hShips[i] -> Draw("");
+      if(hShips[i]->GetEntries() != 0)leg -> AddEntry(hShips[i],Form("Shipment %d",i+1),"l");
+      if(i == 0)
+	{
+	  hShips[i] -> GetYaxis() -> SetRangeUser(0,20);
+	  hShips[i] ->Draw("");
+	}
       else
 	{
-	  hShips[i] -> Draw("same");
+	  if(hShips[i] -> GetEntries() !=0)hShips[i] -> Draw("same");
 	}
       leg -> Draw("same");
       color++;
     }
-	    
-      
-	    
-
   
 }
 
@@ -107,12 +109,12 @@ void ShipmentComp(int angle, const int nShips, int offset)
   
 
 int countLines(char *filelist) { 
-    int number_of_lines = 0;
-    std::string line;
-    std::ifstream myfile(filelist);
+  int number_of_lines = 0;
+  std::string line;
+  std::ifstream myfile(filelist);
 
-    while (std::getline(myfile, line))++number_of_lines;
-    myfile.seekg (0, ios::beg);
-    return number_of_lines;
+  while (std::getline(myfile, line))++number_of_lines;
+  myfile.seekg (0, ios::beg);
+  return number_of_lines;
      
 }
