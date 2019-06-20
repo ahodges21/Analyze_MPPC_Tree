@@ -1,0 +1,118 @@
+#include "cstdlib"
+#include "iostream"
+#include "TFile.h"
+#include "cstring"
+#include "TLegend.h"
+#include "TGraph.h"
+//#include "TROOT.h"
+#include "TH3.h"
+#include "TH2.h"
+#include "TH1.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TMath.h"
+#include "TText.h"
+#include "TPaveText.h"
+#include "TGraphErrors.h"
+#include "TMultiGraph.h"
+#include "TAttFill.h"
+#include "TColor.h"
+#include "string"
+
+using namespace std;
+const int colors[6] = { 1,2,3,4,8,9};
+int countLines(char *filelists);
+
+void buildGlobalDist()
+{
+
+  TDatime *datemade = new TDatime();
+  TFile *output = new TFile(Form("Master_Output_%d.root",datemade -> GetDate()),"RECREATE");
+
+  gStyle -> SetOptStat(1110);
+  TH1F *globalDist = new TH1F("globalDist","GlobalDist",40,0,2);
+ 
+  
+  TH1F *tiles[12];
+  ifstream tileSource[12];
+  TCanvas *c[12];
+  for(int i =0; i < 12; i++)
+    {
+      tileSource[i].open(Form("excelLists/B%dexcel.txt",i+21));
+      tiles[i] = new TH1F(Form("B%d",i+21),Form("B%d",i+21),40,0,2);
+      tiles[i] -> SetTitle(Form("B%d;MPV_{Tile}/<MPV_{Refs}>;",i+21));
+      for(int j = 0; j < countLines(Form("excelLists/B%dexcel.txt",i+21)); j++)
+	{
+	  float x;
+	  tileSource[i] >> x;
+	  tiles[i] -> Fill(x);
+	}
+      globalDist -> Add(tiles[i],1);
+      c[i] = new TCanvas();
+      tiles[i] -> Draw();
+      output -> cd();
+      tiles[i] -> Write();
+      c[i] -> SaveAs(Form("excelLists/plots/B%d.pdf",i+21));
+    }
+
+ 
+  
+  TCanvas *all = new TCanvas();
+  globalDist -> SetTitle("");
+  globalDist -> SetXTitle("MPV_{Tile}/<MPV_{Refs}>");
+  globalDist -> Draw();
+  globalDist -> Write();
+  all -> SaveAs("excelLists/plots/global.pdf");
+  output -> Close();
+			    
+}
+
+void ShipmentComp(int angle, const int nShips, int offset)
+{
+  gStyle -> SetOptStat(0);
+  int color = 0;
+  ifstream shipsIn[nShips];
+  TH1F *hShips[nShips];
+  TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
+  for(int i = 0 + offset; i < nShips+offset; i++)
+    {
+      shipsIn[i].open(Form("/Users/anthonyhodges/sPHENIX/uniplastData/excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));
+      hShips[i] = new TH1F(Form("Shipment_%d",i),Form("Shipment_%d",i),40,0,2);
+      for(int j = 0; j < countLines(Form("/Users/anthonyhodges/sPHENIX/uniplastData/excelLists/shipBreakdown/B%d_%d.txt",angle,i+1));j++)
+	{
+	  float x;
+	  shipsIn[i] >> x;
+	  hShips[i] -> Fill(x);
+	}
+      
+      hShips[i] -> SetTitle(";MPV_{Tile}/<MPV_{Refs}>;");
+      hShips[i] -> SetLineColor(colors[color]);
+      leg -> AddEntry(hShips[i],Form("Shipment %d",i+1),"l");
+      if(i == 0)hShips[i] -> Draw("");
+      else
+	{
+	  hShips[i] -> Draw("same");
+	}
+      leg -> Draw("same");
+      color++;
+    }
+	    
+      
+	    
+
+  
+}
+
+
+  
+
+int countLines(char *filelist) { 
+    int number_of_lines = 0;
+    std::string line;
+    std::ifstream myfile(filelist);
+
+    while (std::getline(myfile, line))++number_of_lines;
+    myfile.seekg (0, ios::beg);
+    return number_of_lines;
+     
+}
