@@ -69,7 +69,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 
   int nEvents = mppc -> GetEntries();
 
-  int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
+  //int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7}; // GSU Channel List
 
@@ -79,7 +79,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7,8}; //GSU test stand for first batch of pre-production tiles
 
-  //int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
+  int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
 
   //int chanList[nChans] = {31,30,29,28,23,22,21,20,10};
   
