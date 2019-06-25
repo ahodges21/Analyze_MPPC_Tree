@@ -30,9 +30,9 @@ using namespace std;
   ----------------------------*/
 
 const int nChans = 10; //10 for Uniplast data, 9 for first shipment preliminary testing
-const int Trig1 = 10;//10; //0 for uniplast data
-const int Trig2 = 31;//11; //1 for uniplast data
-const int thresh = 250;//475;//250 for GSU, 475 for Uniplast
+const int Trig1 = 0;//10; //0 for uniplast data
+const int Trig2 = 1;//11; //1 for uniplast data
+const int thresh = 250;//250 for GSU, 475 for Uniplast
 const int setup = 5;
 /*----------------
 Correction factor setup list: 
@@ -69,7 +69,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 
   int nEvents = mppc -> GetEntries();
 
-  //int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
+  int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7}; // GSU Channel List
 
@@ -79,7 +79,7 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 
   //int chanList[nChans] = {0,1,2,3,4,5,6,7,8}; //GSU test stand for first batch of pre-production tiles
 
-  int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
+  //int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
 
   //int chanList[nChans] = {31,30,29,28,23,22,21,20,10};
   
@@ -172,9 +172,9 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
       if(mode == 2) performance = (Fits[i] -> GetParameter(1)/Fits[0]->GetParameter(1))*getCorrFactor(i,setup,angleco);
       if(mode == 3) performance = (Fits[i] -> GetParameter(1)/mpvAve)*getCorrFactor(i,setup,angleco);
       if(mode == 4) performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,setup,angleco);
-      
-      cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << endl;
-     
+      //if(performance <= 0.8 || performance >= 1.2){
+      cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << "; MPV: " << Fits[i] -> GetParameter(1) << endl;
+      //}
       refScale -> Fill(performance);
       positionDep -> SetPoint(i,i,performance);
 	/*
@@ -184,7 +184,6 @@ TH1F* makeUniTree(string f, int mode, int iscalib, int angle)
 	  cout << "Channel" << i << endl;
 	  cout << "Ratio: " << (Fits[i] -> GetParameter(1)/Fits[0]->GetParameter(1))*getCorrFactor(i,1,1) << endl;
 	  }*/
-      
     }
   
   
@@ -636,7 +635,7 @@ float getCorrFactor(int chan, int setup, int angle)
 			     {1.00953, 1.05771, 1.05937, 1.0865, 1.04967, 1.0836, 1.05704, 1.05847, 1.14003, 0.940622, 1.00165, 0.856642},
 			     {0.944529, 0.916359, 0.863106, 0.891162, 0.944426, 0.928753, 0.972719, 0.950543, 0.950041, 0.955648, 0.970133, 0.989863},
 			     {0.9991, 1.0597, 1.03, 1.04918, 0.996916, 1.04336, 1.07335, 1.01073, 0.949444, 1.09776, 1.02661, 1.08458},
-			     {0.9251, 0.991318, 0.891331, 0.898837, 1.11301, 1.20446, 1.06852, 1.02149, 1.13027, 0.988081, 0.989497, 1.15295},};//Uniplast test factor 
+			     {0.9251, 0.991318, 0.891331, 0.898837, 1.11301, 1.20446, 1.06852, 1.02149, 1.13027, 0.988081, 0.989497, 1.15295}};//Uniplast test factor 
 
   float NTSUniFactor[10] = {0.959184,0.868481,0.908916,0.86014,0.833106,0.859274,0.869979,0.838039,0.9355,0.9355};//For redoing Uniplast tests with new test stand at GSU
 
