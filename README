@@ -3,17 +3,11 @@ sPHENIX Hadronic calorimeter tiles respond to cosmic hits, and the data is reado
 
 The file contains, as of now, 6 functions, that are used jointly to analyze the data:
 
-TH1F *makeUniTree(string f, int mode = 0, int iscalib, int angle)
+TH1F *makeUniTree(string f, int iscalib, int angle)
 Primary function that reads root file and analyzes ttree
 
 f - input root file
 
-mode - parameter signifies how the performance ratio is calculated:
-0 - do not calculate, simply draw histograms
-1 - Forgot to make this do something
-2 - Performance = MPV_Tile/MPV_Ref -> Used for when there's one reference tile
-3 - Performance = MPV_Tile/<MPV_Test> -> Used for when there is no reference tile (early Uniplast data)
-4 - Performance = MPV_Tile/<MPV_Refs> -> For newest GSU tests involving two reference tiles
 
 iscalib - creates files necessary to calculate position/correct based calibration factors
 0 - do not create calibration files (use if you just want to draw or the factors have already been made)
@@ -22,41 +16,24 @@ iscalib - creates files necessary to calculate position/correct based calibratio
 angle - the angle of the tile (e.g. 21), used to fetch correction factors. 
 
 float extractPerfRat(char* filelist, int mode)
-This function extracts the tile best suited to being a new reference tile
+This function extracts the tile best suited to being a new reference tile; for use only in makeGSUTree since uniplast selects their own reference tiles. 
 
 filelist - list of files associated with the tests of a particular angle
 
 mode - see above under makeUniTree
 
-void makeRunningDists(char *filelist, int mode, char* outname, int angle, int iscalib = 0)
+void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib = 0)
 Runs makeUniTree over a list of files specified by filelist
 
 filelist - list of files to be analyzed
 
-mode - Set to whatever mode you want makeUniTree run in
-
 outname - output file name
-
-float extractSBR(TH1F *histin)
-
-Currently untested. Meant to integrate pedestal and Landau distribution to extract signal to background ratio. 
 
 int countLines(char *filelist)
 
 Simply counts the number of lines in a given file. Used to set limits on for loops.
 
 filelist - list of files to be analyzed
-
-void superImpose(int start, char* globalname = "", char* bd = "")
-
-Looks for files created by makeRunningDists starting with "start" variable, then plots the next four 
-angle types after it. E.g., if you give it 5, it'll start with b25 and go to b29
-
-numSec - number of HCal eta angles being analyzed. 
-
-globalname - name of file containing global distribution of tile performances, set to 0 if you don't want the global distribution drawn
-
-bd - prefix on files containing histogram for individual tile angle.
 
 void makePositDep(char *filelist, int setup, int angle)
 Makes plot of performance ratio versus SiPM position and averages each position to calculate correction factor
@@ -69,12 +46,6 @@ setup - setup of CAEN unit
 
 fileNum - number of files associated with test, used to determine array size, so has to be set as const
 
-void makeCalFiles(char *filelist, int mode) - Deprecated, can be done by makeRunningDists
-Makes calibration files to be fed to makePostDep
-
-filelist - list of files to be analyzed
-
-mode - analysis mode to be fed to makeUniTree
 
 float getCorrFactor(int chan, int setup, int angle)
 Returns correction factor determined via the per-channel, per-angle calibration process
