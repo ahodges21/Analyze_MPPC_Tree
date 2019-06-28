@@ -38,7 +38,6 @@ void makeRunningDists(char *filelist, int mode);
 float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle);
-void superImpose(int start, char* globalname = "", char* bd = "");
 
 TH1F* makeUniTree(string f, int iscalib, int angle)
 {
@@ -249,52 +248,6 @@ void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0)
   output -> cd();
   runningDist -> Write();
   output -> Close();  
-}
-
-const int numSec = 4;
-void superImpose(int start, char* globalname = "", char* bd = "")
-{
-  gStyle -> SetOptStat(1111);
-  TH1F *hists[numSec];
-  TFile *secs[numSec];
-  
-  if(globalname){
-    TFile *global = new TFile(Form("%s.root",globalname));
-    TH1F *allSecs = (TH1F*)global->Get(globalname);
-    allSecs -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Refs}>");
-    TCanvas *globalc = new TCanvas();
-    allSecs -> SetTitle("");
-    allSecs -> SetName("All Tiles");
-    allSecs -> Draw();
-  }
-  int colors[4] = {1,2,3,6};
-  TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
-  TCanvas *breakdown = new TCanvas();
-  for(int i = start-1; i < numSec+start-1; i++)
-    {
-      secs[i-start+1] = new TFile(Form("B%d%s.root",i+21,bd));
-      cout << Form("B%d%s",i+21,bd) << endl;
-      hists[i-start+1] = (TH1F*)secs[i-start+1] -> Get(Form("B%d%s",i+21,bd));
-      hists[i-start+1] -> GetXaxis() -> SetTitle("MPV_{Tile}/<MPV_{Refs}>");
-      hists[i-start+1] -> SetName(Form("B%d",i+21));
-      hists[i-start+1] -> SetLineColor(colors[i-start+1]);
-      hists[i-start+1] -> SetMarkerStyle(4);
-      hists[i-start+1] -> SetTitle("");
-      leg -> AddEntry(hists[i-start+1],Form("B%d",i+21),"l");
-    }
-  leg -> Draw("same");
- 
-  TCanvas *c1 = new TCanvas();
-  c1 -> Divide(2,2);
-  for(int i = 0; i < numSec; i++)
-    {
-      c1 -> cd(i+1);
-      hists[i] -> GetXaxis() -> SetRangeUser(0,2);
-	
-      hists[i] ->Draw();
-	
-    }
-  
 }
 
 void makePositDep(char *filelist, int angle, const int fileNum)
