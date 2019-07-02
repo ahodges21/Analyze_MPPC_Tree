@@ -33,13 +33,13 @@ using namespace std;
 const int nChans = 10; 
 const int thresh = 250;
 const int nBins = 40;
-TH1F* makeUniTree(string f, int iscalib, int angle);
+TH1F* makeGSUTree(string f, int iscalib, int angle);
 void makeRunningDists(char *filelist, int mode);
 float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle);
 
-TH1F* makeUniTree(string f, int iscalib, int angle)
+TH1F* makeGSUTree(string f, int iscalib, int angle)
 {
   TFile *fin = new TFile(f.c_str());
   TTree *mppc = (TTree*)fin->Get("mppc");
