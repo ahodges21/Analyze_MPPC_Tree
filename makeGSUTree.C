@@ -241,7 +241,7 @@ void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0)
       string name;
       list >> name;
       cout << name << endl;
-      runningDist -> Add(makeUniTree(name,iscalib,angle));
+      runningDist -> Add(makeGSUTree(name,iscalib,angle));
     }
   runningDist -> Draw();
   runningDist -> SetName(outname);
