@@ -272,7 +272,7 @@ void makePositDep(char *filelist, int angle, const int fileNum)
       dummy2 -> SetMarkerStyle(4);
       dummy2 -> GetYaxis() -> SetRangeUser(0,2);
       int start = 1;
-      int end = -1;
+      int end = nChans-1;
       
       for(int j = start; j < end; j++)
 	{
