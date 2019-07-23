@@ -39,7 +39,7 @@ float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle, int iscalib);
 
-TH1F* makeGSUTree(string f, int iscalib, int angle)
+TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
 {
   TFile *fin = new TFile(f.c_str());
   TTree *mppc = (TTree*)fin->Get("mppc");
@@ -114,7 +114,7 @@ TH1F* makeGSUTree(string f, int iscalib, int angle)
   
   if(iscalib)
     {
-      TFile *output = new TFile(Form("calibFiles/B%dCal_%d.root",angle,rand()%100),"RECREATE");
+      TFile *output = new TFile(Form("calibFiles/B%dCal_%d.root",angle,seg),"RECREATE");
       cout << "output name" << output ->GetName() << endl;
       positionDep -> SetMarkerStyle(4);
       positionDep -> SetName("positionDep");
@@ -242,7 +242,7 @@ void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0)
       string name;
       list >> name;
       cout << name << endl;
-      runningDist -> Add(makeGSUTree(name,iscalib,angle));
+      runningDist -> Add(makeGSUTree(name,iscalib,angle,i));
     }
   runningDist -> Draw();
   runningDist -> SetName(outname);
