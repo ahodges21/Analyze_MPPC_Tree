@@ -37,7 +37,7 @@ TH1F* makeGSUTree(string f, int iscalib, int angle);
 void makeRunningDists(char *filelist, int mode);
 float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
-float getCorrFactor(int chan, int angle);
+float getCorrFactor(int chan, int angle, int iscalib);
 
 TH1F* makeGSUTree(string f, int iscalib, int angle)
 {
@@ -103,7 +103,7 @@ TH1F* makeGSUTree(string f, int iscalib, int angle)
   for(int i = start; i < end ;i++)
     {
       
-      float performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,angleco);
+      float performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,angleco,iscalib);
       
       cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << "; MPV: " << Fits[i] -> GetParameter(1) << endl;
      
@@ -115,6 +115,7 @@ TH1F* makeGSUTree(string f, int iscalib, int angle)
   if(iscalib)
     {
       TFile *output = new TFile(Form("calibFiles/B%dCal_%d.root",angle,rand()%100),"RECREATE");
+      cout << "output name" << output ->GetName() << endl;
       positionDep -> SetMarkerStyle(4);
       positionDep -> SetName("positionDep");
       output -> cd();
@@ -250,7 +251,7 @@ void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0)
   output -> Close();  
 }
 
-void makePositDep(char *filelist, int angle, const int fileNum)
+void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 {
   
   TMultiGraph *allChans = new TMultiGraph();
@@ -279,9 +280,9 @@ void makePositDep(char *filelist, int angle, const int fileNum)
 	    double x,y;
 	    dummy -> GetPoint(j,x,y);
 	  
-	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20));
+	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
 	   
-	    corrFac[j] += y*getCorrFactor(j,angle-20);
+	    corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
 	    
 	    
 	}
@@ -311,7 +312,7 @@ void makePositDep(char *filelist, int angle, const int fileNum)
  
 }
 
-float getCorrFactor(int chan, int angle)
+float getCorrFactor(int chan, int angle, int iscalib)
 {
   
   float dualFactor[8][12] = {{0.810873,0.814866,0.794136,0.763176,0.935977,0.918277,0.854018,0.962745,0.870416,0.967691,0.812866,0.873582},
@@ -322,9 +323,14 @@ float getCorrFactor(int chan, int angle)
 			     {0.865029,0.887264,0.816234,0.833545,0.97727,0.969677,0.831858,0.985357,0.970586,1.00305,0.864868,0.8912},
 			     {0.848827,0.860359,0.791134,0.811859,0.902238,0.900005,0.793583,0.93354,0.918294,0.926915,0.7502,0.934033},
 			     {0.831169,0.923422,0.877023,0.817548,0.99918,1.01151,0.9256,0.979267,0.954242,1.00587,0.927643,0.99419}};
-  
-  return 1/dualFactor[chan-1][angle-1];
-
+  if(iscalib)
+    {
+      return 1;
+    }
+  else
+    {
+      return 1/dualFactor[chan-1][angle-1];
+    }
 }
 
  
