@@ -33,7 +33,7 @@ const int nBins = 40;
 TH1F* makeUniTree(string f, int iscalib, int angle);
 void makeRunningDists(char *filelist, char* outname, int angle, int iscalib = 0);
 int countLines(char *filelist);
-float getCorrFactor(int chan, int angle);
+float getCorrFactor(int chan, int angle, int iscalib);
 
 TH1F* makeUniTree(string f, int iscalib, int angle)
 {
@@ -102,7 +102,7 @@ TH1F* makeUniTree(string f, int iscalib, int angle)
     {
            
       float performance = 0;
-      performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[1] -> GetParameter(1))))*getCorrFactor(i,angleco);
+      performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[1] -> GetParameter(1))))*getCorrFactor(i,angleco,iscalib);
       cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << "; MPV: " << Fits[i] -> GetParameter(1) << endl;
       refScale -> Fill(performance);
       positionDep -> SetPoint(i,i,performance);
@@ -167,7 +167,7 @@ int countLines(char *filelist) {
 }
 
 
-void makePositDep(char *filelist, int setup, int angle, const int fileNum)
+void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 {
   
   TMultiGraph *allChans = new TMultiGraph();
@@ -196,9 +196,9 @@ void makePositDep(char *filelist, int setup, int angle, const int fileNum)
 	    double x,y;
 	    dummy -> GetPoint(j,x,y);
 	  
-	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20));
+	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20, iscalib));
 	    
-	    corrFac[j] += y*getCorrFactor(j,angle-20);
+	    corrFac[j] += y*getCorrFactor(j,angle-20, iscalib);
 	    
 	}
       
@@ -228,14 +228,21 @@ void makePositDep(char *filelist, int setup, int angle, const int fileNum)
 }
 
  
-float getCorrFactor(int chan, int angle)
+float getCorrFactor(int chan, int angle, int iscalib)
 {
   
   float uniFactor[8][14] = {0}; //I have no idea how many tile angles there actually are anymore, there are at least 14 though, based on the excel documents. 
  
 
-  //return uniFactor[chan][angle-1];
-  return 1.;
+  if(iscalib)
+    {
+      return 1;
+    }
+  else
+    {
+      
+      return 1/uniFactor[chan][angle-1];
+    }
 }
 
  
