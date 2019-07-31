@@ -35,7 +35,7 @@ void makeRunningDists(char *filelist, char* outname, int angle, int iscalib = 0)
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle, int iscalib);
 
-TH1F* makeUniTree(string f, int iscalib, int angle)
+TH1F* makeUniTree(string f, int iscalib, int angle, int seg     )
 {
   TFile *fin = new TFile(f.c_str());
   TTree *mppc = (TTree*)fin->Get("mppc");
@@ -111,7 +111,7 @@ TH1F* makeUniTree(string f, int iscalib, int angle)
   
   if(iscalib)
     {
-      TFile *output = new TFile(Form("calibFiles/B%dCal_%d.root",angle,rand()%100),"RECREATE");
+      TFile *output = new TFile(Form("calibFiles/B%dCal_%d.root",angle,seg),"RECREATE");
       positionDep -> SetMarkerStyle(4);
       positionDep -> SetName("positionDep");
       output -> cd();
@@ -232,7 +232,7 @@ float getCorrFactor(int chan, int angle, int iscalib)
 {
   
   float uniFactor[8][14] = {0}; //I have no idea how many tile angles there actually are anymore, there are at least 14 though, based on the excel documents. 
- 
+  
 
   if(iscalib)
     {
