@@ -341,7 +341,7 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
     {
       std[i] /= fileNum -1;
       std[i] = sqrt(std[i]);
-      cout << "Average for position " << i << ": " << corrFac[i] << "#pm" << " " << std[i] << endl;
+      cout << "Average for position " << i << ": " << corrFac[i] << "\u00b1" << " " << std[i] << endl;
     }
   
   allChans -> Draw("ap");
