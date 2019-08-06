@@ -38,6 +38,8 @@ void makeRunningDists(char *filelist, int mode);
 float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle, int iscalib);
+fstream& goToLine(fstream& file, unsigned int num);
+
 
 TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
 {
@@ -256,7 +258,7 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
   
   TMultiGraph *allChans = new TMultiGraph();
   TFile *ins[fileNum];
-  ifstream tilelist;
+  fstream tilelist;
   tilelist.open(filelist);
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
   float corrFac[nChans] = {0};
@@ -299,12 +301,12 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
   for(int i = 0; i < nChans; i++)
     {
       corrFac[i] /= fileNum;
-      cout << "Average for position " << i << ": " << corrFac[i] << endl;
     }
   float std[nChans] = {0};
-  
+  goToLine(tilelist,0);
   for(int i = 0; i < fileNum; i++)
     {
+      
       string name;
       tilelist >> name;
       cout << name << endl;
@@ -382,4 +384,14 @@ int countLines(char *filelist) {
     myfile.seekg (0, ios::beg);
     return number_of_lines;
      
+}
+
+fstream& goToLine(fstream& file, unsigned int num)
+{
+  file.seekg(0);
+  for(int i = 0; i < num; i++)
+    {
+      file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+    }
+  return file;
 }
