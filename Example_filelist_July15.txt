@@ -1,5 +1,0 @@
-/home/tk-421/Desktop/rootFilesDR/B26/mppc_15_07_19_B26_17R.root
-/home/tk-421/Desktop/rootFilesDR/B21/mppc_15_07_19_B21_17.root
-/home/tk-421/Desktop/rootFilesDR/B31/mppc_15_07_19_B31_17.root
-/home/tk-421/Desktop/rootFilesDR/B23/mppc_15_07_19_B23_17.root
-/home/tk-421/Desktop/rootFilesDR/B32/mppc_15_07_19_B32_18.root
