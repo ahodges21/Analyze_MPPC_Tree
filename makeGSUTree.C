@@ -260,8 +260,10 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
   tilelist.open(filelist);
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
   float corrFac[nChans] = {0};
+  float corrFacErr[nChans] = {0};
   int added[4] = {0};
   float tileCorr = 0;
+  
   for(int i = 0; i < fileNum; i++)
     {
       string name;
@@ -284,7 +286,6 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 	   
 	    corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
 	    
-	    
 	}
       
      
@@ -300,8 +301,46 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
       corrFac[i] /= fileNum;
       cout << "Average for position " << i << ": " << corrFac[i] << endl;
     }
+  float std[nChans] = {0};
+  
+  for(int i = 0; i < fileNum; i++)
+    {
+      string name;
+      tilelist >> name;
+      cout << name << endl;
+      ins[i] = new TFile(name.c_str());
+      TGraph *dummy = (TGraph*)ins[i] -> Get("positionDep");
+      TGraph *dummy2 = new TGraph();
+      dummy2 -> SetMarkerStyle(4);
+      dummy2 -> GetYaxis() -> SetRangeUser(0,2);
+      int start = 1;
+      int end = nChans-1;
+      
+      for(int j = start; j < end; j++)
+	{
+	    double x,y;
+	    dummy -> GetPoint(j,x,y);
+	  
+	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
+	   
+	    //corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
+	    std[j] = pow(corrFac[j] - y,2);
+	}
+      
+     
+      if(i == 0)  leg -> AddEntry(dummy2,Form("B%d",angle),"p");
+
+      allChans -> Add(dummy2,"p");
+      
+    }
   
   
+  for(int i = 0; i < nChans; i++)
+    {
+      std[i] /= fileNum -1;
+      std[i] = sqrt(std[i]);
+      cout << "Average for position " << i << ": " << corrFac[i] << "#pm" << " " << std[i] << endl;
+    }
   
   allChans -> Draw("ap");
   allChans -> GetXaxis() -> SetTitle("SiPM Position Number");
