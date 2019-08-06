@@ -38,7 +38,7 @@ void makeRunningDists(char *filelist, int mode);
 float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle, int iscalib);
-ifstream& goToLine(fstream& file, unsigned int num);
+ifstream& goToLine(ifstream& file, unsigned int num);
 
 
 TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
@@ -386,7 +386,7 @@ int countLines(char *filelist) {
      
 }
 
-ifstream& goToLine(fstream& file, unsigned int num)
+ifstream& goToLine(ifstream& file, unsigned int num)
 {
   file.seekg(0);
   for(int i = 0; i < num; i++)
