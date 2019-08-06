@@ -38,7 +38,7 @@ void makeRunningDists(char *filelist, int mode);
 float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle, int iscalib);
-fstream& goToLine(fstream& file, unsigned int num);
+ifstream& goToLine(fstream& file, unsigned int num);
 
 
 TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
@@ -258,7 +258,7 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
   
   TMultiGraph *allChans = new TMultiGraph();
   TFile *ins[fileNum];
-  fstream tilelist;
+  ifstream tilelist;
   tilelist.open(filelist);
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
   float corrFac[nChans] = {0};
@@ -386,7 +386,7 @@ int countLines(char *filelist) {
      
 }
 
-fstream& goToLine(fstream& file, unsigned int num)
+ifstream& goToLine(fstream& file, unsigned int num)
 {
   file.seekg(0);
   for(int i = 0; i < num; i++)
