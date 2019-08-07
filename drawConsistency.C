@@ -42,11 +42,17 @@ void drawConsistency()
   variance -> GetXaxis() ->SetRangeUser(0,0.2);
   one_two -> GetXaxis() -> SetRangeUser(-.20,0.2);
   two_three -> GetXaxis() -> SetRangeUser(-0.2,0.2);
+  TH2F *typeD12 = new TH2F("typeD12",";Tile Type;|#DeltaPR_{12}|",12,0.5,12.5,20,0,0.5);
+  typeD12 -> SetNdivisions(512);
+  TH2F *typeD13 = new TH2F("typeD13",";Tile Type;|#DeltaPR_{13}|",12,0.5,12.5,20,0,0.5);
+  typeD13 -> SetNdivisions(512);
   for(int i = 1; i < nLines; i++)
     {
       goToLine(input, i);
-      string xs,ys,zs, ds;
-      input >> ds >> ds >> ds >> xs >> ys >> zs;
+      string xs,ys,zs, ds, name;
+      input >> ds >> name >> ds >> xs >> ys >> zs;
+      float type = stof(name.substr(1,2));
+      type -= 20;
       float x, y, z;
       x = stof(xs);
       y = stof(ys);
@@ -62,18 +68,24 @@ void drawConsistency()
     
       variance -> Fill(var);
 
+      typeD12 -> Fill(type,abs(x-y));
+      typeD13 -> Fill(type,abs(x-z));
       
     }
 
   variance -> SetTitle(";PR STD;");
   one_two -> SetTitle(";Test 1/2 #Delta;");
-  two_three -> SetTitle(";Test 2/3 #Delta;");
+  two_three -> SetTitle(";Test 1/3 #Delta;");
   TCanvas *c1 = new TCanvas();
   one_two -> Draw();
   TCanvas *c2 = new TCanvas();
   two_three -> Draw();
   TCanvas *c3 = new TCanvas();
   variance -> Draw();
+  TCanvas *c4 = new TCanvas();
+  typeD12 -> Draw("colz");
+  TCanvas *c5 = new TCanvas();
+  typeD13 -> Draw("colz");
 }
 
 
