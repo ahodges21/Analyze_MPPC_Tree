@@ -30,12 +30,12 @@ using namespace std;
 const int nChans = 10; //Currently testing ten at a time
 const int thresh = 475;//475 for Uniplast
 const int nBins = 40;
-TH1F* makeUniTree(string f, int iscalib, int angle);
+TH1F* makeUniTree(string f, int iscalib, int angle, int seg);
 void makeRunningDists(char *filelist, char* outname, int angle, int iscalib = 0);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle, int iscalib);
 
-TH1F* makeUniTree(string f, int iscalib, int angle, int seg     )
+TH1F* makeUniTree(string f, int iscalib, int angle, int seg = 0)
 {
   TFile *fin = new TFile(f.c_str());
   TTree *mppc = (TTree*)fin->Get("mppc");
@@ -144,7 +144,7 @@ void makeRunningDists(char *filelist, char* outname, int angle, int iscalib=0)
       string name;
       list >> name;
       cout << name << endl;
-      runningDist -> Add(makeUniTree(name,iscalib,angle));
+      runningDist -> Add(makeUniTree(name,iscalib,angle,i));
     }
   runningDist -> Draw();
   runningDist -> SetName(outname);
