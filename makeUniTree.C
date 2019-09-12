@@ -102,7 +102,7 @@ TH1F* makeUniTree(string f, int iscalib, int angle, int seg = 0)
     {
            
       float performance = 0;
-      performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[1] -> GetParameter(1))))*getCorrFactor(i,angleco,iscalib);
+      performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[1] -> GetParameter(1))))*getCorrFactor(i-1,angleco,iscalib);
       cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << "; MPV: " << Fits[i] -> GetParameter(1) << endl;
       refScale -> Fill(performance);
       positionDep -> SetPoint(i,i,performance);
