@@ -47,7 +47,7 @@ TH1F* makeUniTree(string f, int iscalib, int angle, int seg = 0)
  
   int nEvents = mppc -> GetEntries();
 
-  int chanList[nChans] = {0,1,2,3,8,9,10,11,12,13}; //Uniplast Channel List
+  int chanList[nChans] = {0,2,3,8,9,10,11,12,13,1}; //Uniplast Channel List
 
   TCanvas *c1 = new TCanvas();
   c1 -> Divide(4,3);
