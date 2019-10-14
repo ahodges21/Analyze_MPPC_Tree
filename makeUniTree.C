@@ -111,7 +111,7 @@ TH1F* makeUniTree(string f, int iscalib, int angle, int seg = 0)
   
   if(iscalib)
     {
-      TFile *output = new TFile(Form("calibFiles/B%dCal_%d.root",angle,seg),"RECREATE");
+      TFile *output = new TFile(Form("calibMfiles/B%dCal_%d.root",angle,seg),"RECREATE");
       positionDep -> SetMarkerStyle(4);
       positionDep -> SetName("positionDep");
       output -> cd();
@@ -137,7 +137,7 @@ void makeRunningDists(char *filelist, char* outname, int angle, int iscalib=0)
   list.open(filelist);
   TH1F *runningDist;
   TFile *output = new TFile(Form("%s.root",outname), "RECREATE");
-  runningDist = new TH1F("runningDist","runningDist",nBins,0,2);
+  runningDist = new TH1F("Performance Distribution","Performance Distribution",nBins,0,2);
   
   for(int i = 0; i < numOfFiles; i++)
     {
@@ -148,6 +148,7 @@ void makeRunningDists(char *filelist, char* outname, int angle, int iscalib=0)
     }
   runningDist -> Draw();
   runningDist -> SetName(outname);
+  runningDist ->GetXaxis()->SetTitle("MPV_{Tile}/<MPV_{Refs}>");
   
   output -> cd();
   runningDist -> Write();
@@ -231,7 +232,14 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 float getCorrFactor(int chan, int angle, int iscalib)
 {
   
-  float uniFactor[8][14] = {0}; //I have no idea how many tile angles there actually are anymore, there are at least 14 though, based on the excel documents. 
+  float uniFactor[8][16] = {{1.07134,1.02745,1,1,1,1,1,1,1,1,1,1,1.07728,1.16182,0.967205,1.00542},
+			    {0.97717,0.948518,1,1,1,1,1,1,1,1,1,1,1.02194,1.04401,0.808341,0.944358},
+			    {0.984534,0.982921,1,1,1,1,1,1,1,1,1,1,1.02504,1.15625,0.89641,0.950605},
+			    {1.02608,1.00779,1,1,1,1,1,1,1,1,1,1,1.05233,1.11478,0.956458,0.968951},
+			    {1.03199,1.03054,1,1,1,1,1,1,1,1,1,1,1.09404,1.15629,0.950297,0.961107},
+			    {1.04987,1.05428,1,1,1,1,1,1,1,1,1,1,1.09405,1.19737,1.00274,1.02314},
+			    {1.02072,1.01345,1,1,1,1,1,1,1,1,1,1,1.05458,1.20478,0.956957,0.953656},
+			    {0.975692,0.992402,1,1,1,1,1,1,1,1,1,1,1.00196,1.1494,0.926969,0.938573}}; //I have no idea how many tile angles there actually are anymore, there are at least 14 though, based on the excel documents. 
   
 
   if(iscalib)
