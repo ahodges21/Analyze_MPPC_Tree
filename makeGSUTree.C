@@ -136,15 +136,20 @@ TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
 //This is the function that selects new reference tiles.
 //At the time of writing, we'll probably need to use it one more time
 //for the M series tiles.
-float extractPerfRat(char* filelist, int mode, float factor)
+float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
 {
-  int numOfFiles = countLines(filelist);
+  const int numOfFiles = countLines(filelist);
   float minPerf = 4;
   int minPerfChan = 0;
   string minPerfFile = ""; 
-  fstream link; link.open(filelist);
+  ifstream link; link.open(filelist);
   float best_perf = 0;
-
+  //float prs[nChans-2][numOfFiles];
+  float prs[numOfFiles][nChans-2];
+  float calib[nChans-2] = {0};
+  float globalAve = 0;
+  goToLine(link,0);
+  
   for(int l = 0; l < numOfFiles; l++)
     {
       
@@ -194,33 +199,69 @@ float extractPerfRat(char* filelist, int mode, float factor)
 	  
 	    }
       
-	    hcalSoftTrig[i] -> Fit("landau","q","+",0,4100);
-	    hcalSoftTrig[i] -> GetYaxis() -> SetRangeUser(1,10e2);
-	    Fits[i] = (TF1*)hcalSoftTrig[i] -> GetFunction("landau");
-	    gStyle -> SetOptFit(111);
-	    mpvDist -> Fill(Fits[i] -> GetParameter(1));
-	  
+	  hcalSoftTrig[i] -> Fit("landau","q","+",0,4100);
+	  hcalSoftTrig[i] -> GetYaxis() -> SetRangeUser(1,10e2);
+	  Fits[i] = (TF1*)hcalSoftTrig[i] -> GetFunction("landau");
+	  gStyle -> SetOptFit(111);
+	  mpvDist -> Fill(Fits[i] -> GetParameter(1));
+	    
 	}
  
-      int start = 1;
-    
-      for(int k = start; k < nChans-1 ;k++)
+
+
+      
+      for(int k = 1; k < nChans-1 ;k++)
 	{
       
-	  float performance = 0;
-	   
-	  performance = (1/factor)*(Fits[k] -> GetParameter(1)/Fits[0]->GetParameter(1));
-
-	  if(abs(1-performance) < minPerf)
+	  
+	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1))) );
+	  //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
+	  
+	  
+	}
+    }
+  
+  
+  for(int q = 0; q < nChans-2; q++)
+    {
+      for(int a = 0; a < numOfFiles; a++)
+	{
+	  calib[q] += prs[a][q];
+	}
+      calib[q] /= numOfFiles;
+      cout << Form("Calibration factor for channel %d is %g", q,1/calib[q]) << endl;
+    }
+  
+  
+  
+  for(int i = 0; i < numOfFiles; i++)
+    {
+      for(int j = 0; j < nChans - 2; j++)
+	{
+	  globalAve += prs[i][j]*(1/calib[j]);
+	}
+    }
+  globalAve /= numOfFiles*(nChans-2);
+  cout << Form("Global average: %g",globalAve) << endl;
+  for(int g = 0; g < numOfFiles; g++)
+    {
+      for(int d = 1; d < nChans-1;d++)
+	{
+	      
+	  if((abs(globalAve-prs[d][g]*(1/calib[d-1])) < minPerf) && g != RefFile1 && d != RefChan1)
 	    {
-	      minPerfChan = k;
-	      minPerfFile = f;
-	      minPerf = abs(1 - performance);
-	      best_perf = performance;
+	      minPerfChan = d;
+	      goToLine(link,g);
+	      link >> minPerfFile;
+	      minPerfFile += "filenum:_";
+	      minPerfFile += to_string(g);
+			     
+	      minPerf = abs(globalAve - prs[d][g]*(1/calib[d-1]));
+	      best_perf = prs[d][g]*(1/calib[d-1]);
 	    }
 	  else
 	    {
-	      cout << "Skip!" << endl;
+	      //cout << "Skip!" << endl;
 	    }
 	}
     }
@@ -281,12 +322,12 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
       
       for(int j = start; j < end; j++)
 	{
-	    double x,y;
-	    dummy -> GetPoint(j,x,y);
+	  double x,y;
+	  dummy -> GetPoint(j,x,y);
 	  
-	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
+	  dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
 	   
-	    corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
+	  corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
 	    
 	}
       
@@ -320,13 +361,13 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
       
       for(int j = start; j < end; j++)
 	{
-	    double x,y;
-	    dummy -> GetPoint(j,x,y);
+	  double x,y;
+	  dummy -> GetPoint(j,x,y);
 	  
-	    dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
+	  dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
 	   
-	    //corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
-	    std[j] = pow(corrFac[j] - y,2);
+	  //corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
+	  std[j] = pow(corrFac[j] - y,2);
 	}
       
      
@@ -343,6 +384,7 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
       std[i] = sqrt(std[i]);
       cout << "Average for position " << i << ": " << corrFac[i] << "\u00b1" << " " << std[i] << endl;
     }
+
   
   allChans -> Draw("ap");
   allChans -> GetXaxis() -> SetTitle("SiPM Position Number");
@@ -352,6 +394,8 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 
  
 }
+
+
 
 float getCorrFactor(int chan, int angle, int iscalib)
 {
@@ -364,6 +408,19 @@ float getCorrFactor(int chan, int angle, int iscalib)
 			     {0.865029,0.887264,0.816234,0.833545,0.97727,0.969677,0.831858,0.985357,0.970586,1.00305,0.864868,0.8912},
 			     {0.848827,0.860359,0.791134,0.811859,0.902238,0.900005,0.793583,0.93354,0.918294,0.926915,0.7502,0.934033},
 			     {0.831169,0.923422,0.877023,0.817548,0.99918,1.01151,0.9256,0.979267,0.954242,1.00587,0.927643,0.99419}};
+  
+
+  
+  /*
+    float dualFactor[8][12] = {{0.932662,0.957156,1.0051,,,,,,,,,},
+    {0.959198,0.981928,1.00981,,,,,,,,,},
+    {0.940088,1.00062,1.01009,,,,,,,,,},
+    {0.940884,1.00404,1.01967,,,,,,,,,},
+    {0.954588,1.00085,1.01337,,,,,,,,,},
+    {0.943405,1.00374,1.02564,,,,,,,,,},
+    {0.903525,0.967802,0.984223,,,,,,,,,},
+    {0.971448,1.04533,1.01663,,,,,,,,,}};
+  */ 
   if(iscalib)
     {
       return 1;
@@ -376,13 +433,13 @@ float getCorrFactor(int chan, int angle, int iscalib)
 
  
 int countLines(char *filelist) { 
-    int number_of_lines = 0;
-    std::string line;
-    std::ifstream myfile(filelist);
+  int number_of_lines = 0;
+  std::string line;
+  std::ifstream myfile(filelist);
 
-    while (std::getline(myfile, line))++number_of_lines;
-    myfile.seekg (0, ios::beg);
-    return number_of_lines;
+  while (std::getline(myfile, line))++number_of_lines;
+  myfile.seekg (0, ios::beg);
+  return number_of_lines;
      
 }
 
