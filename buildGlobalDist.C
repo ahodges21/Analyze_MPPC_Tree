@@ -20,10 +20,10 @@
 #include "string"
 
 using namespace std;
-const int colors[6] = { 1,2,3,4,8,9};
+const int colors[5] = {1,2,4,8,9};
 int countLines(char *filelists);
 
-void buildGlobalDist()
+void buildGlobalDist(int mode)
 {
 
   TDatime *datemade = new TDatime();
@@ -32,39 +32,61 @@ void buildGlobalDist()
   gStyle -> SetOptStat(1110);
   TH1F *globalDist = new TH1F("globalDist","GlobalDist",40,0,2);
  
-  
-  TH1F *tiles[12];
-  ifstream tileSource[12];
-  TCanvas *c[12];
-  for(int i =0; i < 12; i++)
+  if(mode == 0)
     {
-      tileSource[i].open(Form("excelLists/B%dexcel.txt",i+21));
-      tiles[i] = new TH1F(Form("B%d",i+21),Form("B%d",i+21),40,0,2);
-      tiles[i] -> SetTitle(Form("B%d;MPV_{Tile}/<MPV_{Refs}>;",i+21));
-      for(int j = 0; j < countLines(Form("excelLists/B%dexcel.txt",i+21)); j++)
+      TH1F *tiles[12];
+      ifstream tileSource[12];
+      TCanvas *c[12];
+      for(int i =0; i < 12; i++)
 	{
-	  float x;
-	  tileSource[i] >> x;
-	  tiles[i] -> Fill(x);
+	  tileSource[i].open(Form("excelLists/B%dexcel.txt",i+21));
+	  tiles[i] = new TH1F(Form("B%d",i+21),Form("B%d",i+21),40,0,2);
+	  tiles[i] -> SetTitle(Form("B%d;MPV_{Tile}/<MPV_{Refs}>;",i+21));
+	  for(int j = 0; j < countLines(Form("excelLists/B%dexcel.txt",i+21)); j++)
+	    {
+	      string x;
+	      tileSource[i] >> x;
+	      cout <<Form("B%d: %s",i+21,x.c_str())<<endl;
+	      tiles[i] -> Fill(stof(x));
+	    }
+	  globalDist -> Add(tiles[i],1);
+	  c[i] = new TCanvas();
+	  tiles[i] -> Draw();
+	  output -> cd();
+	  tiles[i] -> Write();
+	  c[i] -> SaveAs(Form("excelLists/plots/B%d.pdf",i+21));
 	}
-      globalDist -> Add(tiles[i],1);
-      c[i] = new TCanvas();
-      tiles[i] -> Draw();
-      output -> cd();
-      tiles[i] -> Write();
-      c[i] -> SaveAs(Form("excelLists/plots/B%d.pdf",i+21));
-    }
 
  
   
-  TCanvas *all = new TCanvas();
-  globalDist -> SetTitle("");
-  globalDist -> SetXTitle("MPV_{Tile}/<MPV_{Refs}>");
-  globalDist -> Draw();
-  globalDist -> Write();
-  all -> SaveAs("excelLists/plots/global.pdf");
-  output -> Close();
-			    
+      TCanvas *all = new TCanvas();
+      globalDist -> SetTitle("");
+      globalDist -> SetXTitle("MPV_{Tile}/<MPV_{Refs}>");
+      globalDist -> Draw();
+      globalDist -> Write();
+      all -> SaveAs("excelLists/plots/global.pdf");
+      output -> Close();
+    }
+  if(mode == 1)
+    {
+      ifstream globaldist;
+      globaldist.open("excelLists/excelDist.txt");
+      int nLines = countLines("excelLists/excelDist.txt");
+      cout << nLines << endl;
+      for(int i = 0; i < nLines; i++)
+	{
+	  string pr;
+	  globaldist >> pr;
+	  globalDist -> Fill(stof(pr));
+	}
+      TCanvas *all = new TCanvas();
+      globalDist -> SetTitle("");
+      globalDist -> SetXTitle("MPV_{Tile}/<MPV_{Refs}>");
+      globalDist -> Draw();
+      globalDist -> Write();
+      all -> SaveAs("excelLists/plots/global.pdf");
+      output -> Close();
+    }
 }
 
 void ShipmentComp(int angle, const int nShips)
