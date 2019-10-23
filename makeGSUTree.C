@@ -132,22 +132,15 @@ TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
   return refScale;
 }
 
-
-//This is the function that selects new reference tiles.
-//At the time of writing, we'll probably need to use it one more time
-//for the M series tiles.
-float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
+void Megan_Calibration(char *filelist)
 {
-  const int numOfFiles = countLines(filelist);
+   const int numOfFiles = countLines(filelist);
   float minPerf = 4;
   int minPerfChan = 0;
   string minPerfFile = ""; 
   ifstream link; link.open(filelist);
-  float best_perf = 0;
   //float prs[nChans-2][numOfFiles];
   float prs[numOfFiles][nChans-2];
-  float calib[nChans-2] = {0};
-  float globalAve = 0;
   goToLine(link,0);
   
   for(int l = 0; l < numOfFiles; l++)
@@ -164,6 +157,128 @@ float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
       TH1F *hcalSoftTrig[nChans];
       int nEvents = mppc -> GetEntries();
 
+      int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
+      
+      TCanvas *c1 = new TCanvas();
+      c1 -> Divide(4,3);
+      TF1 *Fits[nChans];
+      TGraph *positionDep;
+ 
+      //The code here compiles the raw data from each channel into the hcanNoTrig histograms.
+      //Then it applies an offline coincidence trigger on channels 0 and 1.
+      for(int i = 0; i < nChans; i++)
+	{
+	  c1 -> cd(i+1);
+	  gPad -> SetLogy();
+	  hcalNoTrig[i] = new TH1F(Form("Chan_%d_Open_Trigger",chanList[i]),Form("Chan_%d_Open_Trigger",chanList[i]),250,0,4000);
+	  hcalSoftTrig[i] = new TH1F(Form("Chan_%d_Soft_Trigger",chanList[i]),Form("Chan_%d_Soft_Trigger",chanList[i]),250,0,4000);
+      
+	  for(int j = 0; j < nEvents; j++)
+	    {
+	  
+	      mppc -> GetEntry(j);
+	      hcalNoTrig[i] -> Fill(chg[chanList[i]]);
+	  
+	      //John H's method
+	  
+	      int chanCheck = 0;
+	      for(int k = 0; k < nChans; k++)
+		{
+		  if(chg[chanList[k]] >= thresh) chanCheck++;
+		}
+	      if(chanCheck == nChans)  hcalSoftTrig[i] -> Fill(chg[chanList[i]]);
+        
+	  
+	  
+	    }
+      
+	  hcalSoftTrig[i] -> Fit("landau","q","+",0,4100);
+	  hcalSoftTrig[i] -> GetYaxis() -> SetRangeUser(1,10e2);
+	  Fits[i] = (TF1*)hcalSoftTrig[i] -> GetFunction("landau");
+	  gStyle -> SetOptFit(111);
+	  mpvDist -> Fill(Fits[i] -> GetParameter(1));
+	    
+	}
+ 
+
+
+      
+      for(int k = 1; k < nChans-1 ;k++)
+	{
+      
+	  
+	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1))) );
+	  //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
+	  
+	  
+	}
+    }
+
+
+  float chan_1_pr[nChans-2];
+  float corr_factor[nChans-2] = {0};
+  corr_factor[0] = 1.;
+  for(int i = 0; i < numOfFiles ;i++)
+    {
+      
+      chan_1_pr[i] = prs[i][0];
+      for(int j = 1; j < nChans - 2; j++)
+	{
+	  corr_factor[j] += prs[i][j]/prs[i][0];
+	}
+    }
+
+  for(int j = 1; j < nChans-2; j++)
+    {
+      corr_factor[j] /= 8;
+    }
+
+  float tiles[8];
+  for(int i = 0; i < nChans-2;i++)
+    {
+      if(i == nChans - 3) printf("%g \n",corr_factor[i]);
+      else printf("%g,",corr_factor[i]);
+      tiles[i] = i+1;
+    }
+
+  
+  TGraph *factors = new TGraph(nChans-2,tiles,corr_factor);
+  factors -> SetMarkerStyle(4);
+  factors -> SetTitle(";Channel Num;Correction Factor");
+  TCanvas *derp = new TCanvas();
+  factors -> Draw("ap");
+}
+
+
+//This is the function that selects new reference tiles.
+//At the time of writing, we'll probably need to use it one more time
+//for the M series tiles.
+float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
+{
+  const int numOfFiles = countLines(filelist);
+  float minPerf = 4;
+  int minPerfChan = 0;
+  string minPerfFile = ""; 
+  ifstream link; link.open(filelist);
+  float prs[numOfFiles][nChans-2];
+  float calib[nChans-2] = {0};
+  goToLine(link,0);
+  float globalAve = 0;
+  float best_perf = 0;
+  
+  for(int l = 0; l < numOfFiles; l++)
+    {
+      
+      string f;
+      link >> f;
+      TFile *fin = new TFile(f.c_str());
+      TTree *mppc = (TTree*)fin->Get("mppc");
+      TH1F *mpvDist = new TH1F("mpvDist","mpvDist",200,400,1400);
+      UShort_t chg[32];
+      mppc -> SetBranchAddress("chg",&chg);
+      TH1F *hcalNoTrig[nChans];
+      TH1F *hcalSoftTrig[nChans];
+      int nEvents = mppc -> GetEntries();
       int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
       
       TCanvas *c1 = new TCanvas();
@@ -413,6 +528,7 @@ float getCorrFactor(int chan, int angle, int iscalib)
 
 
   /*Calculated for using all results from the preproduction*/
+  /*
   float dualFactor[8][12] = {{1.03729,1.04865,1.00742,1.01741,1,1.10299,1.17016,1.09667,1.19163,1.04526,1.09724,1.13525},
 			     {1.01875,1.02049,0.996906,0.98308,1,1.08133,1.1573,1.07222,1.17334,1.04325,1.06025,1.10417},
 			     {1.02077,1.00031,1.01602,1.02363,1,1.07813,1.12258,1.09569,1.08201,1.02287,1.03322,1.12255},
@@ -421,6 +537,18 @@ float getCorrFactor(int chan, int angle, int iscalib)
 			     {1.01075,0.999249,0.982315,0.999596,1,1.0611,1.11878,1.04572,1.07822,1.02064,1.03966,1.0764},
 			     {1.05119,1.03668,1.02986,1.03021,1,1.09882,1.13749,1.09649,1.12204,1.02832,1.10241,1.12698},
 			     {0.988086,0.95988,0.969652,0.939793,1,1.01351,1.02965,1.01127,1.08678,0.955139,1.0206,1.00872}};
+  */
+
+  /*Calculated from Megan's method*/
+
+  float dualFactor[8][12] = {{1,1,1,1,1,1,1,1,1,1,1,1},
+			     {1.01817,1,1,1,1,1,1,1,1,1,1,1},
+			     {0.998495,1,1,1,1,1,1,1,1,1,1,1},
+			     {1.02026,1,1,1,1,1,1,1,1,1,1,1},
+			     {1.02171,1,1,1,1,1,1,1,1,1,1,1},
+			     {1.00865,1,1,1,1,1,1,1,1,1,1,1},
+			     {0.987429,1,1,1,1,1,1,1,1,1,1,1},
+			     {1.06346,1,1,1,1,1,1,1,1,1,1,1}};
 			     /*
     float dualFactor[8][12] = {{0.932662,0.957156,1.0051,,,,,,,,,},
     {0.959198,0.981928,1.00981,,,,,,,,,},
