@@ -39,6 +39,7 @@ float extractPerfRat(char* filelist, int mode);
 int countLines(char *filelist);
 float getCorrFactor(int chan, int angle, int iscalib);
 ifstream& goToLine(ifstream& file, unsigned int num);
+float get_ref_cal(int chan, int angle);
 
 
 TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
@@ -253,7 +254,7 @@ void Megan_Calibration(char *filelist)
 //This is the function that selects new reference tiles.
 //At the time of writing, we'll probably need to use it one more time
 //for the M series tiles.
-float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
+float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 = 40)
 {
   const int numOfFiles = countLines(filelist);
   float minPerf = 4;
@@ -329,14 +330,14 @@ float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
 	{
       
 	  
-	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1))) );
+	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1)))) * get_ref_cal(k,angle-20);
 	  //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
 	  
 	  
 	}
     }
   
-  
+  /* This was an initial, mistaken calibration
   for(int q = 0; q < nChans-2; q++)
     {
       for(int a = 0; a < numOfFiles; a++)
@@ -358,12 +359,14 @@ float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
     }
   globalAve /= numOfFiles*(nChans-2);
   cout << Form("Global average: %g",globalAve) << endl;
+  */
+  
   for(int g = 0; g < numOfFiles; g++)
     {
       for(int d = 1; d < nChans-1;d++)
 	{
 	      
-	  if((abs(globalAve-prs[d][g]*(1/calib[d-1])) < minPerf) && g != RefFile1 && d != RefChan1)
+	  if((abs(globalAve-prs[d][g]) < minPerf) && g != RefFile1 && d != RefChan1)
 	    {
 	      minPerfChan = d;
 	      goToLine(link,g);
@@ -371,8 +374,8 @@ float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
 	      minPerfFile += "filenum:_";
 	      minPerfFile += to_string(g);
 			     
-	      minPerf = abs(globalAve - prs[d][g]*(1/calib[d-1]));
-	      best_perf = prs[d][g]*(1/calib[d-1]);
+	      minPerf = abs(globalAve - prs[d][g]);
+	      best_perf = prs[d][g];
 	    }
 	  else
 	    {
@@ -382,6 +385,7 @@ float extractPerfRat(char* filelist, int RefFile1 = 40, int RefChan1 = 40)
     }
   cout << "File: " << minPerfFile <<endl;
   cout << "Channel: " << minPerfChan << endl;
+  cout << "Global average: " << globalAve << endl;
   cout << "Ratio: " << best_perf << endl;
   return 0;
 }
@@ -549,7 +553,12 @@ float getCorrFactor(int chan, int angle, int iscalib)
 			     {1.00865,1,1,1,1.02821,1,1,1,1,1,1,1},
 			     {0.987429,1,1,1,0.976231,1,1,1,1,1,1,1},
 			     {1.06346,1,1,1,1.06533,1,1,1,1,1,1,1}};
-			     /*
+
+  //Really need to clear out some of these defunct correction factors. It's like hoarding, but with git versioning.
+
+  
+  
+  /*
     float dualFactor[8][12] = {{0.932662,0.957156,1.0051,,,,,,,,,},
     {0.959198,0.981928,1.00981,,,,,,,,,},
     {0.940088,1.00062,1.01009,,,,,,,,,},
@@ -572,7 +581,21 @@ float getCorrFactor(int chan, int angle, int iscalib)
     }
 }
 
- 
+
+float get_ref_cal(int chan, int angle)
+{
+  float ref_calib[8][16] = {{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+			    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+			    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+			    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+			    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+			    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+			    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+			    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}};
+
+  return 1/ref_calib[chan-1][angle-1];
+}
+
 int countLines(char *filelist) { 
   int number_of_lines = 0;
   std::string line;
