@@ -568,7 +568,7 @@ float getCorrFactor(int chan, int angle, int iscalib)
     }
   else
     {
-      return (1/((dualFactor[chan-1][angle-1]))+(1-MeanShift[angle-1]);
+      return 1/((dualFactor[chan-1][angle-1])*MeanShift[angle-1]);
     }
 }
 
