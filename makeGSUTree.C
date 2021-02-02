@@ -50,8 +50,17 @@ TH1F* makeGSUTree(string f, int iscalib, int angle, int seg, int isInner)
   mppc -> SetBranchAddress("chg",&chg);
   TH1F *hcalNoTrig[nChans];
   TH1F *hcalSoftTrig[nChans];
-  int angleco = angle - 20; 
- 
+  int angleco;
+  
+  if(!isInner)
+    {
+      angleco = angle - 20; 
+    }
+  else
+    {
+      angleco = angle;
+    }
+  
   int nEvents = mppc -> GetEntries();
 
   int chanList[nChans] = {11,31,30,29,28,23,22,21,20,10};
