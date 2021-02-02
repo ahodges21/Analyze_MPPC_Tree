@@ -35,14 +35,14 @@ const int thresh = 250;
 const int nBins = 40;
 TH1F* makeGSUTree(string f, int iscalib, int angle);
 void makeRunningDists(char *filelist, int mode);
-float extractPerfRat(char* filelist, int angle, int RefFile1, int RefChan1);
+float extractPerfRat(char* filelist, int angle, int RefFile1, int RefChan1, int isInner);
 int countLines(char *filelist);
-float getCorrFactor(int chan, int angle, int iscalib);
+float getCorrFactor(int chan, int angle, int iscalib, int isInner);
 ifstream& goToLine(ifstream& file, unsigned int num);
-float get_ref_cal(int chan, int angle);
+float get_ref_cal(int chan, int angle, int isInner);
 
 
-TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
+TH1F* makeGSUTree(string f, int iscalib, int angle, int seg, int isInner)
 {
   TFile *fin = new TFile(f.c_str());
   TTree *mppc = (TTree*)fin->Get("mppc");
@@ -106,7 +106,7 @@ TH1F* makeGSUTree(string f, int iscalib, int angle, int seg)
   for(int i = start; i < end ;i++)
     {
       
-      float performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,angleco,iscalib);
+      float performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,angleco,iscalib,isInner);
       
       //cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << "; MPV: " << Fits[i] -> GetParameter(1) << endl;
       cout << Form("i = %d; Channel = %d; PR, MPV: - %g - %g",i, chanList[i], performance, Fits[i] -> GetParameter(1)) << endl;
@@ -255,7 +255,7 @@ void Megan_Calibration(char *filelist)
 //This is the function that selects new reference tiles.
 //At the time of writing, we'll probably need to use it one more time
 //for the M series tiles.
-float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 = 40)
+float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 = 40, int isInner = 1)
 {
   const int numOfFiles = countLines(filelist);
   float minPerf = 4;
@@ -331,7 +331,7 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
 	{
       
 	  
-	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1)))) * get_ref_cal(k,angle-20);
+	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1)))) * get_ref_cal(k,angle-20,isInner);
 	  //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
 	  
 	  
@@ -391,7 +391,7 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
   return 0;
 }
 
-void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0)
+void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0, int isInner=1)
 {
   ifstream list;
   int numOfFiles = countLines(filelist);
@@ -405,7 +405,7 @@ void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0)
       string name;
       list >> name;
       cout << name << endl;
-      runningDist -> Add(makeGSUTree(name,iscalib,angle,i));
+      runningDist -> Add(makeGSUTree(name,iscalib,angle,i, isInner));
     }
   runningDist -> Draw();
   runningDist -> SetName(outname);
@@ -414,7 +414,7 @@ void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0)
   output -> Close();  
 }
 
-void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
+void makePositDep(char *filelist, int angle, const int fileNum, int iscalib, int isInner)
 {
   
   TMultiGraph *allChans = new TMultiGraph();
@@ -445,9 +445,9 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 	  double x,y;
 	  dummy -> GetPoint(j,x,y);
 	  
-	  dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
+	  dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib,isInner));
 	   
-	  corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
+	  corrFac[j] += y*getCorrFactor(j,angle-20,iscalib,isInner);
 	    
 	}
       
@@ -484,7 +484,7 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 	  double x,y;
 	  dummy -> GetPoint(j,x,y);
 	  
-	  dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib));
+	  dummy2 -> SetPoint(j,x,y*getCorrFactor(j,angle-20,iscalib,isInner));
 	   
 	  //corrFac[j] += y*getCorrFactor(j,angle-20,iscalib);
 	  std[j] = pow(corrFac[j] - y,2);
@@ -517,7 +517,7 @@ void makePositDep(char *filelist, int angle, const int fileNum, int iscalib)
 
 
 
-float getCorrFactor(int chan, int angle, int iscalib)
+float getCorrFactor(int chan, int angle, int iscalib, int isInner)
 {
 
   /* cout << "channel" << chan << endl;
@@ -525,7 +525,7 @@ float getCorrFactor(int chan, int angle, int iscalib)
 
   /*Calculated from Megan's method*/
 
-  float dualFactor[8][16] = {{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+  float dualFactor_outer[8][16] = {{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 
 			     {1.01817,1.02358,1.02595,1.02806,1.03664,1.00424,1.02599,1.04466,1.02418,1.01737,1.01615,1.02268,1.04851,1.02973,1.00965,0.983839},
 
@@ -543,7 +543,23 @@ float getCorrFactor(int chan, int angle, int iscalib)
 
   //Really need to clear out some of these defunct correction factors. It's like hoarding, but with git versioning.
 
-  
+  //channel by channel corrections for the inner tiles. 
+  float dualFactor_inner[8][12] = {{1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1},
+
+				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+
+				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+
+				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+
+				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+				   
+				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+
+				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+
+				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.}};
+
   
   /*
     float dualFactor[8][12] = {{0.932662,0.957156,1.0051,,,,,,,,,},
@@ -554,50 +570,86 @@ float getCorrFactor(int chan, int angle, int iscalib)
     {0.943405,1.00374,1.02564,,,,,,,,,},
     {0.903525,0.967802,0.984223,,,,,,,,,},
     {0.971448,1.04533,1.01663,,,,,,,,,}};
-  */ 
-  float MeanShift[16] = {0.9651, //21
-			 0.9687, //22
-			 1.015307156, //23
-			 0.826050275, //24
-			 0.8855, //25
-			 0.937601075, //26
-			 0.943933, //27
-			 0.895491, //28
-			 0.980414, //29
-			 1.076, //30
-			 1.009, //31
-			 0.999813, //32
-			 0.921295156, //M49
-			 0.852388531, //M50
-			 0.977862313, //M51
-			 0.95566625}; //M52
-
-
+  */
+  //outer hcal tile meanshifts
+  float MeanShift_outer[16] = {0.9651, //b21
+			       0.9687, //b22
+			       1.015307156, //b23
+			       0.826050275, //b24
+			       0.8855, //b25
+			       0.937601075, //b26
+			       0.943933, //b27
+			       0.895491, //b28
+			       0.980414, //b29
+			       1.076, //b30
+			       1.009, //b31
+			       0.999813, //b32
+			       0.921295156, //M49
+			       0.852388531, //M50
+			       0.977862313, //M51
+			       0.95566625}; //M52
+  //inner hcal tile meanshifts
+  float MeanShift_inner[12] = {1, //z01
+			       1, //z02
+			       1, //z03
+			       1, //z04
+			       1, //z05
+			       1, //z06
+			       1, //z07
+			       1, //z08
+			       1, //z09
+			       1, //z10
+			       1, //z11
+			       1}; //z12 
   if(iscalib)
     {
       return 1;
     }
-  else
+  else if(!isInner)
     {
       /*cout << "dualFactor: " << ((dualFactor[chan-1][angle-1])) << endl;
 	cout << "Meanshift: " << ((MeanShift[angle-1])) << endl;*/
-      return 1/((dualFactor[chan-1][angle-1])*(MeanShift[angle-1]));
+      return 1/((dualFactor_outer[chan-1][angle-1])*(MeanShift_outer[angle-1]));
+    }
+  else
+    {
+      return 1/((dualFactor_inner[chan-1][angle-1])*(MeanShift_inner[angle-1]));
     }
 }
 
 
-float get_ref_cal(int chan, int angle)
+float get_ref_cal(int chan, int angle, int isInner)
 {
-  float ref_calib[8][16] = {{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-			    {1,1,1,1,1,1,1,1,1,1,1,1,1.01355,1.04565,1.01552,1.01196},
-			    {1,1,1,1,1,1,1,1,1,1,1,1,0.97204,0.990323,0.959554,0.96515},
-			    {1,1,1,1,1,1,1,1,1,1,1,1,1.02477,1.02193,1.02547,1.02192},
-			    {1,1,1,1,1,1,1,1,1,1,1,1,1.02764,1.04103,1.02464,1.0105},
-			    {1,1,1,1,1,1,1,1,1,1,1,1,0.994073,1.01793,0.973989,0.995516},
-			    {1,1,1,1,1,1,1,1,1,1,1,1,0.945205,0.977925,0.953201,0.969303},
-			    {1,1,1,1,1,1,1,1,1,1,1,1,1.03831,1.06787,1.0227,0.997852}};
+  //these are temporary calibration factors used in
+  //reference tile selection
+  float ref_calib_inner[8][12] = {{1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1}};
 
-  return 1/ref_calib[chan-1][angle-1];
+  float ref_calib_outer[8][16] = {{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+				  {1,1,1,1,1,1,1,1,1,1,1,1,1.01355,1.04565,1.01552,1.01196},
+				  {1,1,1,1,1,1,1,1,1,1,1,1,0.97204,0.990323,0.959554,0.96515},
+				  {1,1,1,1,1,1,1,1,1,1,1,1,1.02477,1.02193,1.02547,1.02192},
+				  {1,1,1,1,1,1,1,1,1,1,1,1,1.02764,1.04103,1.02464,1.0105},
+				  {1,1,1,1,1,1,1,1,1,1,1,1,0.994073,1.01793,0.973989,0.995516},
+				  {1,1,1,1,1,1,1,1,1,1,1,1,0.945205,0.977925,0.953201,0.969303},
+				  {1,1,1,1,1,1,1,1,1,1,1,1,1.03831,1.06787,1.0227,0.997852}};
+ 
+  
+  
+  if(!isInner)
+    {
+      return 1/ref_calib_outer[chan-1][angle-1];
+    }
+  else
+    {
+      return 1/ref_calib_inner[chan-1][angle-1];
+    }
 }
 
 int countLines(char *filelist) { 
