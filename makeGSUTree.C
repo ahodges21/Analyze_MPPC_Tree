@@ -152,6 +152,7 @@ void Megan_Calibration(char *filelist)
   ifstream link; link.open(filelist);
   //float prs[nChans-2][numOfFiles];
   float prs[numOfFiles][nChans-2];
+  float mpvs[numOfFiles][nChans-2];
   goToLine(link,0);
   
   for(int l = 0; l < numOfFiles; l++)
@@ -219,6 +220,7 @@ void Megan_Calibration(char *filelist)
       
 	  
 	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1))) );
+	  mpvs[l][k-1] = Fits[k] -> GetParameter(1);
 	  //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
 	  
 	  
@@ -228,7 +230,9 @@ void Megan_Calibration(char *filelist)
 
   float chan_1_pr[nChans-2];
   float corr_factor[nChans-2] = {0};
+  float mpv_factor[nChans-2] = {0};
   corr_factor[0] = 1.;
+  mpv_factor[0] = 1.;
   for(int i = 0; i < numOfFiles ;i++)
     {
       
@@ -236,19 +240,21 @@ void Megan_Calibration(char *filelist)
       for(int j = 1; j < nChans - 2; j++)
 	{
 	  corr_factor[j] += prs[i][j]/prs[i][0];
+	  mpv_factor[j] += mpvs[i][j]/mpvs[i][0];
 	}
     }
 
   for(int j = 1; j < nChans-2; j++)
     {
       corr_factor[j] /= 8;
+      mpv_factor[j] /= 8;
     }
 
   float tiles[8];
   for(int i = 0; i < nChans-2;i++)
     {
-      if(i == nChans - 3) printf("%g \n",corr_factor[i]);
-      else printf("%g,",corr_factor[i]);
+      if(i == nChans - 3) printf("PR factor: %g; MPV Factor: %g \n",corr_factor[i], mpv_factor[i]);
+      else printf("PR factor: %g ; MPV factor: %g \n",corr_factor[i],mpv_factor[i]);
       tiles[i] = i+1;
     }
 
@@ -276,6 +282,8 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
   goToLine(link,0);
   float globalAve = 0;
   float best_perf = 0;
+  if(!isInner) angle -= 20;
+
   
   for(int l = 0; l < numOfFiles; l++)
     {
@@ -340,8 +348,8 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
 	{
       
 	  
-	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1)))) * get_ref_cal(k,angle-20,isInner);
-	  //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
+	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1)))) * get_ref_cal(k,angle,isInner);
+	 //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
 	  
 	  
 	}
@@ -359,17 +367,17 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
     }
   
   
-  
+  */
   for(int i = 0; i < numOfFiles; i++)
     {
       for(int j = 0; j < nChans - 2; j++)
 	{
-	  globalAve += prs[i][j]*(1/calib[j]);
+	  globalAve += prs[i][j];
 	}
     }
   globalAve /= numOfFiles*(nChans-2);
   cout << Form("Global average: %g",globalAve) << endl;
-  */
+  
   
   for(int g = 0; g < numOfFiles; g++)
     {
@@ -381,7 +389,7 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
 	      minPerfChan = d;
 	      goToLine(link,g);
 	      link >> minPerfFile;
-	      minPerfFile += "filenum:_";
+	      minPerfFile += "\n filenum: ";
 	      minPerfFile += to_string(g);
 			     
 	      minPerf = abs(globalAve - prs[d][g]);
@@ -632,13 +640,13 @@ float get_ref_cal(int chan, int angle, int isInner)
   //these are temporary calibration factors used in
   //reference tile selection
   float ref_calib_inner[8][12] = {{1,1,1,1,1,1,1,1,1,1,1,1},
-				  {1.08234,1,1,1,1,1,1,1,1,1,1,1},
-				  {0.98616,1,1,1,1,1,1,1,1,1,1,1},
-				  {1.09615,1,1,1,1,1,1,1,1,1,1,1},
-				  {1.10083,1,1,1,1,1,1,1,1,1,1,1},
-				  {1.03547,1,1,1,1,1,1,1,1,1,1,1},
-				  {1.08957,1,1,1,1,1,1,1,1,1,1,1},
-				  {1.049891,1,1,1,1,1,1,1,1,1,1,1}};
+				  {1.09254,1.08072,1.06152,1,1,1,1,1,1,1,1.08234,1},
+				  {1.01463,0.977425,0.996254,1,1,1,1,1,1,1,0.98616,1},
+				  {1.10383,1.07998,1.08392,1,1,1,1,1,1,1,1.09615,1},
+				  {1.09812,1.08305,1.06946,1,1,1,1,1,1,1,1.10083,1},
+				  {1.07396,1.05123,1.03923,1,1,1,1,1,1,1,1.03547,1},
+				  {1.12227,1.09626,1.08433,1,1,1,1,1,1,1,1.08957,1},
+				  {1.07143,1.06519,1.05266,1,1,1,1,1,1,1,1.049891,1}};
 
   float ref_calib_outer[8][16] = {{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 				  {1,1,1,1,1,1,1,1,1,1,1,1,1.01355,1.04565,1.01552,1.01196},
