@@ -381,10 +381,9 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
   
   for(int g = 0; g < numOfFiles; g++)
     {
-      for(int d = 1; d < nChans-1;d++)
+      for(int d = 0; d < nChans - 2; d++)//for(int d = 1; d < nChans-1;d++)
 	{
-	      
-	  if((abs(globalAve-prs[d][g]) < minPerf) && g != RefFile1 && d != RefChan1)
+	  if((abs(globalAve-prs[g][d]) < minPerf) && g != RefFile1 && d != RefChan1)
 	    {
 	      minPerfChan = d;
 	      goToLine(link,g);
@@ -392,8 +391,8 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
 	      minPerfFile += "\n filenum: ";
 	      minPerfFile += to_string(g);
 			     
-	      minPerf = abs(globalAve - prs[d][g]);
-	      best_perf = prs[d][g];
+	      minPerf = abs(globalAve - prs[g][d]);
+	      best_perf = prs[g][d];
 	    }
 	  else
 	    {
