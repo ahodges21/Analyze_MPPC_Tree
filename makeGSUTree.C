@@ -348,7 +348,7 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
 	{
       
 	  
-	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1)))) * get_ref_cal(k,angle,isInner);
+	  prs[l][k-1] = (Fits[k] -> GetParameter(1)/(0.5*(Fits[0]->GetParameter(1) + Fits[9]->GetParameter(1)))) * get_ref_cal(k-1,angle,isInner);
 	 //cout << Form("Performance ratio for Test %d, channel %d: %g",l,k,prs[l][k-1]) << endl;
 	  
 	  
@@ -385,7 +385,7 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
 	{
 	  if((abs(globalAve-prs[g][d]) < minPerf) && g != RefFile1 && d != RefChan1)
 	    {
-	      minPerfChan = d;
+	      minPerfChan = d+1;
 	      goToLine(link,g);
 	      link >> minPerfFile;
 	      minPerfFile += "\n filenum: ";
@@ -404,6 +404,7 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
   cout << "Channel: " << minPerfChan << endl;
   cout << "Global average: " << globalAve << endl;
   cout << "Ratio: " << best_perf << endl;
+  cout << "Uncalibrated ratio: " << best_perf*(1/get_ref_cal(minPerfChan-1,angle,isInner)) << endl;
   return 0;
 }
 
@@ -660,11 +661,11 @@ float get_ref_cal(int chan, int angle, int isInner)
   
   if(!isInner)
     {
-      return 1/ref_calib_outer[chan-1][angle-1];
+      return 1/ref_calib_outer[chan][angle-1];
     }
   else
     {
-      return 1/ref_calib_inner[chan-1][angle-1];
+      return 1/ref_calib_inner[chan][angle-1];
     }
 }
 
