@@ -30,6 +30,7 @@ using namespace std;
   and computes their performance ratios. 
   ----------------------------*/
 
+
 const int nChans = 10; 
 const int thresh = 250;
 const int nBins = 40;
@@ -42,7 +43,7 @@ ifstream& goToLine(ifstream& file, unsigned int num);
 float get_ref_cal(int chan, int angle, int isInner);
 
 
-TH1F* makeGSUTree(string f, int iscalib, int angle, int seg, int isInner)
+TH1F* makeGSUTree(string f, int iscalib, int seg, int isInner)
 {
   TFile *fin = new TFile(f.c_str());
   TTree *mppc = (TTree*)fin->Get("mppc");
@@ -51,6 +52,30 @@ TH1F* makeGSUTree(string f, int iscalib, int angle, int seg, int isInner)
   TH1F *hcalNoTrig[nChans];
   TH1F *hcalSoftTrig[nChans];
   int angleco;
+
+
+
+  //Code below implemented 4.29.21 to fix user error issue with inputting wrong tile shape into function.
+  
+  int angle;
+  angle = atoi(f.substr(15,2).c_str()); //extracts the numbers from Z## in .root file
+  
+  if(angle == 0) // if substr extracted letters instead of numbers, throwing an error. atoi error throws a 0.
+    {
+      cout << "ERROR: Please ensure makeGSUTree is running from same directory as .root file." << '\n';
+      return(0);
+    }
+
+   string response;
+   cout << "Tile shape is: Z" << angle << '\n' << "Is this correct? y or n \n";
+   cin >> response;
+
+   if (response == "n")
+     {
+       cout << "ERROR: Please ensure makeGSUTree is running from same directory as .root file" << '\n';
+       return(0);
+     }
+  
   
   if(!isInner)
     {
@@ -115,7 +140,9 @@ TH1F* makeGSUTree(string f, int iscalib, int angle, int seg, int isInner)
   for(int i = start; i < end ;i++)
     {
       
-      float performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,angleco,iscalib,isInner);
+        float performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*getCorrFactor(i,angleco,iscalib,isInner);
+      
+	//  float performance = (Fits[i] -> GetParameter(1)/(0.5*(Fits[0] -> GetParameter(1) + Fits[nChans-1] -> GetParameter(1))))*get_ref_cal(i-1,angleco,isInner); //pr plots w/o calibs
       
       //cout << "i = " << i << "; Channel = " << chanList[i] << "; PR = " << performance << "; MPV: " << Fits[i] -> GetParameter(1) << endl;
       cout << Form("i = %d; Channel = %d; PR, MPV: - %g - %g",i, chanList[i], performance, Fits[i] -> GetParameter(1)) << endl;
@@ -408,7 +435,7 @@ float extractPerfRat(char* filelist, int angle, int RefFile1 = 40, int RefChan1 
   return 0;
 }
 
-void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0, int isInner=1)
+void makeRunningDists(char *filelist,  char* outname, int iscalib=0, int isInner=1)
 {
   ifstream list;
   int numOfFiles = countLines(filelist);
@@ -422,7 +449,7 @@ void makeRunningDists(char *filelist,  char* outname, int angle, int iscalib=0, 
       string name;
       list >> name;
       cout << name << endl;
-      runningDist -> Add(makeGSUTree(name,iscalib,angle,i, isInner));
+      runningDist -> Add(makeGSUTree(name,iscalib,i, isInner));
     }
   runningDist -> Draw();
   runningDist -> SetName(outname);
@@ -561,27 +588,28 @@ float getCorrFactor(int chan, int angle, int iscalib, int isInner)
   //Really need to clear out some of these defunct correction factors. It's like hoarding, but with git versioning.
 
   //channel by channel corrections for the inner tiles. 
-  float dualFactor_inner[8][12] = {{1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1},
+  float dualFactor_inner[8][12] = {{1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
 
-				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+				   {1.07165, 1.06338, 1.07223, 1.074551, 1.07455, 1.07455, 1.07455, 1.07455, 1.07455, 1.07455, 1.07455, 1.07455},
 
-				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+				   {0.995857, 0.987382, 0.996873, 0.997897, 0.997897, 0.997897, 0.997897, 0.997897, 0.997897, 0.997897, 0.997897, 0.997897},
 
-				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+				   {1.09659, 1.09202, 1.08533, 1.094751, 1.094751, 1.094751, 1.094751, 1.094751, 1.094751, 1.094751, 1.094751, 1.094751},
 
-				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+				   {1.08582, 1.06764, 1.07686, 1.079103, 1.079103, 1.079103, 1.079103, 1.079103, 1.079103, 1.079103, 1.079103, 1.079103},
 				   
-				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+				   {1.05814, 1.04915, 1.05081, 1.054442, 1.054442, 1.054442, 1.054442, 1.054442, 1.054442, 1.054442, 1.054442, 1.054442},
 
-				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.},
+				   {1.09318, 1.08139, 1.07962, 1.090255, 1.090255, 1.090255, 1.090255, 1.090255, 1.090255, 1.090255, 1.090255, 1.090255},
 
-				   {1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.}};
+				   {1.05627, 1.04471, 1.05531, 1.058696, 1.058696, 1.058696, 1.058696, 1.058696, 1.058696, 1.058696, 1.058696, 1.058696}};
 
   
   /*
     float dualFactor[8][12] = {{0.932662,0.957156,1.0051,,,,,,,,,},
     {0.959198,0.981928,1.00981,,,,,,,,,},
     {0.940088,1.00062,1.01009,,,,,,,,,},
+
     {0.940884,1.00404,1.01967,,,,,,,,,},
     {0.954588,1.00085,1.01337,,,,,,,,,},
     {0.943405,1.00374,1.02564,,,,,,,,,},
@@ -606,18 +634,18 @@ float getCorrFactor(int chan, int angle, int iscalib, int isInner)
 			       0.977862313, //M51
 			       0.95566625}; //M52
   //inner hcal tile meanshifts
-  float MeanShift_inner[12] = {1, //z01
-			       1, //z02
-			       1, //z03
-			       1, //z04
-			       1, //z05
-			       1, //z06
-			       1, //z07
-			       1, //z08
-			       1, //z09
-			       1, //z10
-			       1, //z11
-			       1}; //z12 
+  float MeanShift_inner[12] = {0.937061725, //z01
+			       0.9117, //z02
+			       0.8483, //z03
+			       0.9618, //z04
+			       0.8598, //z05
+			       1.0409, //z06
+			       0.8924, //z07
+			       0.9317348214, //z08
+			       0.9373453214, //z09
+			       0.9157617857, //z10  0.9157617857
+			       0.9347895, //z11
+			       0.9531559643}; //z12 
   if(iscalib)
     {
       return 1;
@@ -640,13 +668,13 @@ float get_ref_cal(int chan, int angle, int isInner)
   //these are temporary calibration factors used in
   //reference tile selection
   float ref_calib_inner[8][12] = {{1,1,1,1,1,1,1,1,1,1,1,1},
-				  {1.09254,1.08072,1.06152,1,1,1,1,1,1,1,1.08234,1},
-				  {1.01463,0.977425,0.996254,1,1,1,1,1,1,1,0.98616,1},
-				  {1.10383,1.07998,1.08392,1,1,1,1,1,1,1,1.09615,1},
-				  {1.09812,1.08305,1.06946,1,1,1,1,1,1,1,1.10083,1},
-				  {1.07396,1.05123,1.03923,1,1,1,1,1,1,1,1.03547,1},
-				  {1.12227,1.09626,1.08433,1,1,1,1,1,1,1,1.08957,1},
-				  {1.07143,1.06519,1.05266,1,1,1,1,1,1,1,1.049891,1}};
+				  {1.09254,1.08072,1.06152,1.06284,1.07263,1.08286,1.06282,1.0925,1.08144,1.07029,1.08234,1.05211},
+				  {1.01463,0.977425,0.996254,0.991647,1.00133,1.003,0.995271,1.01575,1.0081,0.995584,0.98616,0.989607},
+				  {1.10383,1.07998,1.08392,1.0978,1.10092,1.10635,1.08708,1.11422,1.10278,1.09214,1.09615,1.07184},
+				  {1.09812,1.08305,1.06946,1.08178,1.07486,1.08627,1.06243,1.07449,1.07583,1.08294,1.10083,1.05917},
+				  {1.07396,1.05123,1.03923,1.05756,1.04146,1.0692,1.04043,1.08238,1.05441,1.05853,1.03547,1.04944},
+				  {1.12227,1.09626,1.08433,1.08972,1.08429,1.09871,1.08115,1.08722,1.09142,1.08283,1.08957,1.07529},
+				  {1.07143,1.06519,1.05266,1.05821,1.0592,1.0739,1.03377,1.06451,1.06081,1.06519,1.049891,1.04959}};
 
   float ref_calib_outer[8][16] = {{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 				  {1,1,1,1,1,1,1,1,1,1,1,1,1.01355,1.04565,1.01552,1.01196},
