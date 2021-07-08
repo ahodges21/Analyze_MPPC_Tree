@@ -67,6 +67,43 @@ void buildGlobalDist(int mode)
       all -> SaveAs("excelLists/plots/global.pdf");
       output -> Close();
     }
+   if(mode == 3)
+    {
+      TH1F *tiles[12];
+      ifstream tileSource[12];
+      TCanvas *c[12];
+      for(int i =0; i < 12; i++)
+	{
+	  tileSource[i].open(Form("excelLists/Z%dexcel.txt",i+1));
+	  tiles[i] = new TH1F(Form("Z%d",i+1),Form("Z%d",i+1),40,0,2);
+	  tiles[i] -> SetTitle(Form("Z%d;MPV_{Tile}/<MPV_{Refs}>;",i+1));
+	  tiles[i] -> SetLineColor(2);
+	  for(int j = 0; j < countLines(Form("excelLists/Z%dexcel.txt",i+1)); j++)
+	    {
+	      string x;
+	      tileSource[i] >> x;
+	      cout <<Form("Z%d: %s",i+1,x.c_str())<<endl;
+	      tiles[i] -> Fill(stof(x));
+	    }
+	  globalDist -> Add(tiles[i],1);
+	  c[i] = new TCanvas();
+	  tiles[i] -> Draw();
+	  output -> cd();
+	  tiles[i] -> Write();
+	  c[i] -> SaveAs(Form("excelLists/plots/Z%d.pdf",i+1));
+	}
+
+ 
+  
+      TCanvas *all = new TCanvas();
+      globalDist -> SetTitle("");
+      globalDist -> SetXTitle("MPV_{Tile}/<MPV_{Refs}>");
+      globalDist -> SetLineColor(2);
+      globalDist -> Draw();
+      globalDist -> Write();
+      all -> SaveAs("excelLists/plots/global.pdf");
+      output -> Close();
+    }
   if(mode == 1)
     {
       ifstream globaldist;
@@ -89,14 +126,17 @@ void buildGlobalDist(int mode)
     }
 }
 
-void ShipmentComp(int angle, const int nShips)
+void ShipmentComp(int angle, const int nShips, int mode)
 {
   
   gStyle -> SetOptStat(0);
-  int color = 0;
+  int color = -1;
   ifstream shipsIn[nShips];
   TH1F *hShips[nShips];
   TLegend *leg = new TLegend(0.6,0.7,0.9,0.9);
+
+  if(mode == 0) //outer HCal tiles
+    {
   for(int i = 0; i < nShips; i++)
     {
       shipsIn[i].open(Form("excelLists/shipBreakdown/B%d/B%d_%d.txt",angle,angle,i+1));
@@ -114,7 +154,7 @@ void ShipmentComp(int angle, const int nShips)
       if(hShips[i]->GetEntries() != 0)leg -> AddEntry(hShips[i],Form("Shipment %d",i+1),"l");
       if(i == 0)
 	{
-	  hShips[i] -> GetYaxis() -> SetRangeUser(0,20);
+	  hShips[i] -> GetYaxis() -> SetRangeUser(0,100);
 	  hShips[i] ->Draw("");
 	}
       else
@@ -124,9 +164,40 @@ void ShipmentComp(int angle, const int nShips)
       leg -> Draw("same");
       color++;
     }
+    }
+
+  if(mode == 1) //inner HCal tiles
+    {
+      for(int i = 0; i < nShips; i++)
+    {
+      shipsIn[i].open(Form("excelLists/shipBreakdown/Z%d/Z%d_%d.txt",angle,angle,i+1));
+      hShips[i] = new TH1F(Form("Shipment_%d",i),Form("Shipment_%d",i),40,0,2);
+      for(int j = 0; j < countLines(Form("excelLists/shipBreakdown/Z%d/Z%d_%d.txt",angle,angle,i+1));j++)
+	{
+	  float x;
+	  shipsIn[i] >> x;
+	  //cout << x << endl;
+	  hShips[i] -> Fill(x);
+	}
+      
+      hShips[i] -> SetTitle(Form("Z%d;MPV_{Tile}/<MPV_{Refs}>;",angle));
+      hShips[i] -> SetLineColor(colors[color]);
+      if(hShips[i]->GetEntries() != 0)leg -> AddEntry(hShips[i],Form("Shipment %d",i+1),"l");
+      if(i == 0)
+	{
+	  hShips[i] -> GetYaxis() -> SetRangeUser(0,100);
+	  hShips[i] ->Draw("");
+	}
+      else
+	{
+	  if(hShips[i] -> GetEntries() !=0)hShips[i] -> Draw("same");
+	}
+      leg -> Draw("same");
+      color++;
+    }
+    }
   
 }
-
 
   
 
